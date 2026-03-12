@@ -14,6 +14,6 @@ source .venv/bin/activate
 
 .\.venv\Scripts\Activate.ps1
 
-## 3 - Installer python dependencies:
+# 3 - Installer python dependencies:
 
 pip install -r requirements.txt
