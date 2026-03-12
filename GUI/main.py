@@ -10,7 +10,7 @@ class GUI:
         self.root.mainloop()
 
 class Page: #klassen som laver Frames og skifter frame
-    def __init__(self,parent,app):
+    def __init__(self,parent,app):       
         self.app = app
         self.frame = tk.Frame(parent)
 
