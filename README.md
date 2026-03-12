@@ -12,7 +12,7 @@ source .venv/bin/activate
 
 ## [Windows (Powershell)]
 
-.\.venv\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1
 
 # 3 - Installer python dependencies:
 
