@@ -1,30 +1,35 @@
 import tkinter as tk
 from tkinter import ttk
-
+from pages import HomePage, SettingsPage
+#self er objektet som man arbejder på
 class GUI:
-    def __init__(self): #__init__() svarer til en contructor i C++
+    def __init__(self):
         self.root = tk.Tk()
         self.root.geometry("320x180")
         self.root.title("iSOUS")
+
+        container = tk.Frame(self.root)
+        container.pack()
+
+        # Lav begge pages
+        self.home_page = HomePage(container, self)
+        self.settings_page = SettingsPage(container, self)
+
+        # Placer dem oven på hinanden
+        self.home_page.frame.grid(row=0, column=0, sticky="nsew")
+        self.settings_page.frame.grid(row=0, column=0, sticky="nsew")
+
+        # Startside
+        self.show_home()
+
+    def show_home(self):
+        self.home_page.show()
+
+    def show_settings(self):
+        self.settings_page.show()
+
     def run(self):
         self.root.mainloop()
-
-class Page: #klassen som laver Frames og skifter frame
-    def __init__(self,parent,app):       
-        self.app = app
-        self.frame = tk.Frame(parent)
-
-    def show(self):
-        self.frame.tkraise()
-
-class HomePage(Page): #komposition
-    def __init__(self,parent,app):
-        super().__init__(parent,app)
-
-        title = tk.label(self.frame, text="iSOUS")
-        title.pack(pady=20)
-
-
 
 app = GUI()
 app.run()
