@@ -9,4 +9,6 @@ public:
   void write(unsigned char data);
   unsigned char read(unsigned char isLast);
   void i2c_stop();
+private:
+  bool transmitting;
 };
