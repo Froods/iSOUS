@@ -20,6 +20,7 @@ void I2C::init_I2C(uint32_t clockFreq) {
 
 
 void I2C::start() {
+  transmitting = true;
   TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN); //Sender start condition
   while (!(TWCR & (1 << TWINT))) //venter indtil transmission ovre.
     ;
