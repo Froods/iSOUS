@@ -2,29 +2,61 @@
 #include "i2c.h"
 #include <stdint.h>
 
-class CO2Sensor : public I2CSensor {
-public:
-  CO2Sensor(I2C &i2c);
-  uint16_t read(); // returns ppm
-private:
-  I2C &I2C_BUS; 
-  uint8_t Adresse;
+
+/**
+ * @enum SCD30_Status
+ * @brief Returværdi for SCD30::readData().
+ *
+ * Bruges til at indikere om en sensor-aflæsning lykkedes,
+ * eller hvad der gik galt.
+ */
+enum SCD30_Status 
+{
+  SCD30_OK,
+  SCD30_TIMEOUT,
+  SCD30_CRC_ERROR
 };
 
-class TemperatureSensor : public I2CSensor {
+/**
+  * @class SCD30
+  * @brief Håndterer kommunikation med SCD30 CO2 sensoren
+  * 
+  * Klassen opdaterer sine attributter (CO2 og temperatur), når readData bliver kaldt.
+  * For at få temperatur/CO2 målingerne, bruges 'getters'
+  *
+  */
+class SCD30 {
 public:
-  TemperatureSensor(I2C &i2c);
-  uint16_t read(); // returns celcius
+  /**
+  * @brief constructor. Starter kontinuerlig måling i sensoren
+  * @param I2C_BUS reference til I2C-bussen. Addresse er hardcoded, da vi har én sensor
+  */
+  SCD30(I2C &i2c);
+  
+  /**
+  *@brief Opdaterer temperatur og CO2 med nyeste målinger
+  */
+  SCD30_Status readData();
+
+  /**
+  * @brief getter CO2
+  * @return returnerer CO2 fra seneste readData();
+  */
+  float getCO2();
+
+  /**
+  * @brief getter Temperature
+  * @return returnerer temperature fra seneste readData();
+  */
+  float getTemperature();
+
 private:
-  I2C &I2C_BUS; 
-  uint8_t Adresse;
+  float CO2;
+  float temperature;
+  I2C &I2C_BUS;
+  uint8_t Adresse = 0x61;
 };
 
-class LightSensor :{
-public:
-  LightSensor(I2C &i2c);
-  uint16_t read(); // returns lux
-private:
-  I2C &I2C_BUS; 
-  uint8_t Adresse;
-};
+
+
+

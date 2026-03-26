@@ -1,9 +1,8 @@
-#pragma once
 #include "sensors.h"
-#include <arduino/delay.h>
+#include <util/delay.h>
 
 /**
-* @brief implementering af sensorklasserne (CO2Sensor, TemperatureSensor, LightSensor)
+* @brief implementering af SCD30 klassen.
 *
 * Oversigt over kommandoer (Fra SCD30 datablad)
 * - 0x0010 start kontinuerlig måling, med 16bit argument for trykkomensation (som vi ikke bruger)
@@ -48,7 +47,7 @@ static uint8_t generateCRCGeneric(const uint8_t* data, size_t count, uint8_t ini
 
 
 
-CO2Sensor::CO2Sensor(I2C &i2c) : I2C_BUS(i2c) 
+SCD30::SCD30(I2C &i2c) : I2C_BUS(i2c) 
 {
   //start kontinuerlig måling uden trykkompensation (afsnit 1.3.1 i SCD30 datablad)
   //Kommando: 0x0010, argument 0x0000.
@@ -69,10 +68,13 @@ CO2Sensor::CO2Sensor(I2C &i2c) : I2C_BUS(i2c)
 }
 
 
-uint16_t CO2Sensor::read()
+
+
+SCD30_Status SCD30::readData()
 {
   // Vent på at data er klar. Spørger sensor om den har data til os. Den modtagne lsb fra sensoren er 1, hvis data er klar. Ellers 0
   
+  uint8_t timeout = 0;
   uint8_t received_lsb = 0;
   while (received_lsb != 1) 
   {
@@ -93,15 +95,22 @@ uint16_t CO2Sensor::read()
     I2C_BUS.stop();
 
     //checksum
-  uint8_t receivedData[] = {received_msb, received_lsb};
-    if (crc != generateCRCGeneric(receivedData, 2)) 
+  uint8_t receivedDataBuffer[] = {received_msb, received_lsb};
+    if (crc != generateCRCGeneric(receivedDataBuffer, 2)) 
     {
       received_lsb = 0; //CRC fejl, start forfra
     }
 
-    if (received_lsb != 1) //Delay inden vi går videre til næste poll 
+    if (received_lsb != 1) //venter 100ms hvis der ikke var noget nye data. 
     {
       _delay_ms(100);
+    }
+
+    //Løkken kan køre 50 gange uden svar(5 sekunder), før vi returnerer SCD30_TIMEOUT
+    timeout++;
+    if (timeout > 50)
+    {
+      return SCD30_TIMEOUT;
     }
   }
   
@@ -132,14 +141,15 @@ uint16_t CO2Sensor::read()
   uint8_t temp_CRC1 = I2C_BUS.read(0);
   uint8_t temp_MSB2 = I2C_BUS.read(0);
   uint8_t temp_LSB2 = I2C_BUS.read(0);
-  uint8_t temp_CRC2 = I2C_BUS.read(0);
+  uint8_t temp_CRC2 = I2C_BUS.read(1); //NACK (Byte 12, inden fugtighed kommer)
 
-  uint8_t hum_MSB1 = I2C_BUS.read(0);
-  uint8_t hum_LSB1 = I2C_BUS.read(0);
-  uint8_t hum_CRC1 = I2C_BUS.read(0);
-  uint8_t hum_MSB2 = I2C_BUS.read(0);
-  uint8_t hum_LSB2 = I2C_BUS.read(0);
-  uint8_t hum_CRC2 = I2C_BUS.read(1); // NACK (byte 18, sidste i transmissionen)
+  //Hvis vi ikke kan cutte kort, læser vi lige de fugtighedsdata også
+  //uint8_t hum_MSB1 = I2C_BUS.read(0);
+  //uint8_t hum_LSB1 = I2C_BUS.read(0);
+  //uint8_t hum_CRC1 = I2C_BUS.read(0);
+  //uint8_t hum_MSB2 = I2C_BUS.read(0);
+  //uint8_t hum_LSB2 = I2C_BUS.read(0);
+  //uint8_t hum_CRC2 = I2C_BUS.read(1); // NACK (byte 18, sidste i transmissionen)
 
   I2C_BUS.stop();
  
@@ -149,28 +159,29 @@ uint16_t CO2Sensor::read()
   if (co2_CRC1 != generateCRCGeneric(co2Buffer, 2) ||
       co2_CRC2 != generateCRCGeneric(co2Buffer + 2, 2)) 
   {
-    return 0;
+    return SCD30_CRC_ERROR;
   }
+
+  uint8_t tempBuffer[4] ={temp_MSB1, temp_LSB1,temp_MSB2, temp_LSB2};
   
-  uint8_t tempCheck1[] = {temp_MSB1, temp_LSB1};
-  uint8_t tempCheck2[] = {temp_MSB2, temp_LSB2};
-  if (temp_CRC1 != generateCRCGeneric(tempCheck1, 2) ||
-      temp_CRC2 != generateCRCGeneric(tempCheck2, 2)) 
+  if (temp_CRC1 != generateCRCGeneric(tempBuffer, 2) ||
+      temp_CRC2 != generateCRCGeneric(tempBuffer + 2, 2)) 
   {
-    return 0;
+    return SCD30_CRC_ERROR;
   }
 
-  uint8_t humCheck1[] = {hum_MSB1, hum_LSB1};
-  uint8_t humCheck2[] = {hum_MSB2, hum_LSB2};
-  if (hum_CRC1 != generateCRCGeneric(humCheck1, 2) ||
-      hum_CRC2 != generateCRCGeneric(humCheck2, 2)) 
-  {
-    return 0;
-  }
+  //optional humidity CRC
+  //uint8_t humCheck1[] = {hum_MSB1, hum_LSB1};
+  //uint8_t humCheck2[] = {hum_MSB2, hum_LSB2};
+  //if (hum_CRC1 != generateCRCGeneric(humCheck1, 2) ||
+  //    hum_CRC2 != generateCRCGeneric(humCheck2, 2)) 
+  //{
+  //  return 0;
+  //}
 
-  //konverter 4 bytes til float
+  //-------konverter resultater til floats, og gem i attributter------
   //Se datasheet afsnit 1.4 
-  float co2Concentration;
+  
   uint32_t tempU32;
 
   //cast 4 bytes to one unsigned 32 bit integer
@@ -180,32 +191,30 @@ uint16_t CO2Sensor::read()
                         ((uint32_t)co2Buffer[3]));
 
   //cast unsigned 32 bit integer to 32 bit float
-  co2Concentration = *(float*)&tempU32;
+  this->CO2 = *(float*)&tempU32;
+ 
 
-  return co2Concentration;
+
+  //cast 4 bytes to one unsigned 32 bit integer
+  tempU32 = (uint32_t) ((((uint32_t)tempBuffer[0]) << 24) |
+                        (((uint32_t)tempBuffer[1]) << 16) |
+                        (((uint32_t)tempBuffer[2]) << 8)  |
+                        ((uint32_t)tempBuffer[3]));
+
+  //cast unsigned 32 bit integer to 32 bit float
+  this->temperature = *(float*)&tempU32;
+
+  return SCD30_OK; 
+  
 }
 
 
-Temperatursensor::Temperatursensor(I2C &i2c)
-  :i2c_(i2c), address_(0x61); //addresse fra datablad
-
-
-
-Temperatursensor::read()
+float SCD30::getCO2()
 {
-  this->readRegister(0x0300) //Addresse samme som CO2, da samme sensor.
-
+  return this->CO2;
 }
 
-
-
-LightSensor::LightSensor(I2C &i2c)
-  :i2c_(i2c), address_(0x39);
-
-
-
-LightSensor::read(){
-
+float SCD30::getTemperature()
+{
+  return this->temperature;
 }
-
-WindowMotor::open();
