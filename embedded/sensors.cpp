@@ -99,7 +99,7 @@ uint16_t CO2Sensor::read()
       received_lsb = 0; //CRC fejl, start forfra
     }
 
-    if (received_lsb != 1) //Delay inden vi går videre til næste skridt 
+    if (received_lsb != 1) //Delay inden vi går videre til næste poll 
     {
       _delay_ms(100);
     }
@@ -142,12 +142,12 @@ uint16_t CO2Sensor::read()
   uint8_t hum_CRC2 = I2C_BUS.read(1); // NACK (byte 18, sidste i transmissionen)
 
   I2C_BUS.stop();
+ 
 
-  //CRC checks
-  uint8_t co2Check1[] = {co2_MSB1, co2_LSB1};
-  uint8_t co2Check2[] = {co2_MSB2, co2_LSB2};
-  if (co2_CRC1 != generateCRCGeneric(co2Check1, 2) ||
-      co2_CRC2 != generateCRCGeneric(co2Check2, 2)) 
+  uint8_t co2Buffer[4] = {co2_MSB1, co2_LSB1,co2_MSB2, co2_LSB2};
+  //crc check
+  if (co2_CRC1 != generateCRCGeneric(co2Buffer, 2) ||
+      co2_CRC2 != generateCRCGeneric(co2Buffer + 2, 2)) 
   {
     return 0;
   }
@@ -167,6 +167,22 @@ uint16_t CO2Sensor::read()
   {
     return 0;
   }
+
+  //konverter 4 bytes til float
+  //Se datasheet afsnit 1.4 
+  float co2Concentration;
+  uint32_t tempU32;
+
+  //cast 4 bytes to one unsigned 32 bit integer
+  tempU32 = (uint32_t) ((((uint32_t)co2Buffer[0]) << 24) |
+                        (((uint32_t)co2Buffer[1]) << 16) |
+                        (((uint32_t)co2Buffer[2]) << 8)  |
+                        ((uint32_t)co2Buffer[3]));
+
+  //cast unsigned 32 bit integer to 32 bit float
+  co2Concentration = *(float*)&tempU32;
+
+  return co2Concentration;
 }
 
 
