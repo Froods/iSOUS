@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from pages import HomePage, SettingsPage
+
 #self er objektet som man arbejder på
 class GUI:
     def __init__(self):
