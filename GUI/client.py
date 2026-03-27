@@ -8,6 +8,10 @@ import struct
 # - 0x00: Send ønskede værdier
 # - 0x01: Læs nuværende temperatur
 # - 0x02: Læs nuværende CO2-niveau
+###########################
+# Vi vil også sende en stop byte til sidst med værdien:
+# Stopbyte = 0xFF
+STOPBYTE = 0xFF
 
 class Client:
 	 
@@ -40,6 +44,7 @@ class Client:
 			packet = self.__pack_desired_values(temp=temp, co2=co2)
 			# Send data
 			self.ser.write(packet)
+			self.ser.flush()
 			print(f"Byte sendt gennem UART: \n{packet}")
 		else:
 			print("Error: Ikke forbundet til nogen port")
@@ -55,4 +60,5 @@ class Client:
 		# 2. Parameter: Kommando
 		# 3. Parameter: Ønskede temperatur
 		# 4. Parameter: Ønskede CO2-niveau
-		return struct.pack('>BBH', 0x00, temp, co2)
+		# 4. Parameter: STOPBYTE
+		return struct.pack('>BBBB', 0x00, temp, co2, STOPBYTE)
