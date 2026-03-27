@@ -6,7 +6,7 @@ from pages import HomePage, SettingsPage
 class GUI:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.geometry("320x180")
+        self.root.geometry("640x360")
         self.root.title("iSOUS")
 
         container = tk.Frame(self.root)
