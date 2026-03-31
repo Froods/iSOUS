@@ -6,7 +6,13 @@
 
 int motor_Pins[4] = {28,26,24,22};
 
-
+//init pins:
+//Making motor pins become output:
+void init_Motor_pins() {
+    for(int i = 0; i < 4; i++) {
+        pinMode(motor_Pins[i], OUTPUT);
+    }
+}
 
 //stages to make the motor spin with the 4 coils
 //the motor spins when a coil i grounded
