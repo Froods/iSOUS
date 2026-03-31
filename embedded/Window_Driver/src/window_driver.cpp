@@ -1,4 +1,11 @@
 #include "window_driver.h"
+#include <Arduino.h>
+
+//Defining motor pins
+//we are using pins 28 (O), 26 (Y), 24 (P), 22 (B)
+
+int motor_Pins[4] = {28,26,24,22};
+
 
 
 //stages to make the motor spin with the 4 coils
