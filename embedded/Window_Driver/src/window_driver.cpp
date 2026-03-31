@@ -34,4 +34,3 @@ const bool stages_O_Y_P_B[8][4] = {
 //step 8:
 {false, true, true, false},
 };
-
