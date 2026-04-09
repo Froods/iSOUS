@@ -3,14 +3,16 @@ import os
 import time
 # This adds the 'GUI' directory to your search path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from client import Client  # Notice the '..' is gone from the import line
+from client import Client 
 
 port = "/dev/ttys002"
 temp = 17
 co2 = 33
 
-c = Client(port=port, baudrate=9600, timeout=1)
+c = Client(port=port, baudrate=9600, timeout=5)
 c.send_desired_values(temp=temp, co2=co2)
+c.get_room_temp()
+c.get_room_co2()
 
 while True:
     time.sleep(1) # Sends once per second
