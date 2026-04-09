@@ -63,3 +63,22 @@ void move_Motor_1_stage (bool direction) {
     digitalWrite(motor_Pins[i], stages_O_Y_P_B[current_Stage][i]);
   }
 }
+
+void test_Of_Motor() {
+  // Drive 4096 steps in one direction
+  for (int i = 0; i < 4096; i++) {
+    move_Motor_1_stage(true);
+    delay(2); // the pause between each stage. Should NOT be less than 1-2 ms
+  }
+  
+  delay(1000); // wait one second
+  
+  // Drive the motor the other direction
+  for (int i = 0; i < 4096; i++) {
+    move_Motor_1_stage(false);
+    delay(2); //the pause between each stage. Should NOT be less than 1-2 ms
+  }
+  
+  delay(1000);
+}
+
