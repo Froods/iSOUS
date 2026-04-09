@@ -1,7 +1,9 @@
 #include <Arduino.h>
-#include <window_driver.h>
+#include "window_driver.h"
 
 int main () {
+
+init(); //init timers on arduino
 
 init_Motor_pins(); //init motor pins
 
