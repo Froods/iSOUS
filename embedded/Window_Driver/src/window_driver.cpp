@@ -3,7 +3,7 @@
 
 //Defining motor pins
 // we are using the digital pins 22 (Blue), 24 (Pink), 26 (Yellow), 28 (Orange)
-int motor_Pins[4] = {28,26,24,22};
+int motor_Pins[4] = {22,24,26,28};
 
 //init pins:
 //Making motor pins become output:
