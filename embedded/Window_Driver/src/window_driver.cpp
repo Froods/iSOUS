@@ -65,6 +65,10 @@ void move_Motor_1_stage (bool direction) {
 }
 
 void test_Of_Motor() {
+  //to move the motor 1 full rotation in one direction we need to move the motor some stages:
+  //To move the motor 1 step (5 degrees), we need to go through 64 stages.
+  //And then to move the motor 360 degrees, we need to go through 64 steps.
+  //therefore to drive a full direction, we need to make 64x64 = 4096 stages
   // Drive 4096 steps in one direction
   for (int i = 0; i < 4096; i++) {
     move_Motor_1_stage(true);
