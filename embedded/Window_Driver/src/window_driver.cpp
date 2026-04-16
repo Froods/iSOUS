@@ -2,7 +2,7 @@
 #include <Arduino.h>
 
 //Defining motor pins
-//we are using pins 28 (O), 26 (Y), 24 (P), 22 (B)
+// we are using the digital pins 22 (Blue), 24 (Pink), 26 (Yellow), 28 (Orange)
 int motor_Pins[4] = {28,26,24,22};
 
 //init pins:
