@@ -1,5 +1,6 @@
 import tkinter as tk
 
+
 class Page:
     def __init__(self, parent, app):
         self.app = app
@@ -23,11 +24,11 @@ class HomePage(Page):
         realtime_panel = tk.LabelFrame(content_row, text="Realtidsdata")
         realtime_panel.pack(fill="x", anchor="n")
 
-        # Midlertidige variabler til visning af realtime-data
-        self.temp_inside_var = tk.StringVar(value="Temperatur inde: 22.5 ℃")
-        self.temp_outside_var = tk.StringVar(value="Temperatur ude: 9.8 ℃")
-        self.co2_var = tk.StringVar(value="CO2 niveau: 640 ppm")
-        self.light_var = tk.StringVar(value="Lysintensitet: 410 lux")
+        # Alle homepage-felter starter som dynamiske realtime-felter fra GUI-attributter.
+        self.temp_inside_var = tk.StringVar(value="Temperatur inde: --")
+        self.temp_outside_var = tk.StringVar(value="Temperatur ude: --")
+        self.co2_var = tk.StringVar(value="CO2 inde: --")
+        self.light_var = tk.StringVar(value="Lysintensitet: --")
 
         tk.Label(realtime_panel, textvariable=self.temp_inside_var, anchor="w").pack(fill="x", padx=8, pady=(6, 2))
         tk.Label(realtime_panel, textvariable=self.temp_outside_var, anchor="w").pack(fill="x", padx=8, pady=2)
@@ -61,6 +62,19 @@ class HomePage(Page):
         )
         stopauto_button.pack(side="left")
 
+    # HomePage opdaterer alle fire realtime-felter fra GUI-attributterne.
+    def refresh_realtime_data(self):
+        temp_inside_text = "--" if self.app.room_temp is None else f"{self.app.room_temp} C"
+        temp_outside_text = "--" if self.app.temp_outside is None else f"{self.app.temp_outside} C"
+        co2_text = "--" if self.app.room_co2 is None else f"{self.app.room_co2} ppm"
+        light_text = "--" if self.app.light is None else f"{self.app.light} lux"
+
+        # tkinter
+        self.temp_inside_var.set(f"Temperatur inde: {temp_inside_text}")
+        self.temp_outside_var.set(f"Temperatur ude: {temp_outside_text}")
+        self.co2_var.set(f"CO2 inde: {co2_text}")
+        self.light_var.set(f"Lysintensitet: {light_text}")
+
 
 class SettingsPage(Page):
     def __init__(self, parent, app):
@@ -79,7 +93,7 @@ class SettingsPage(Page):
 
         # Midlertidig variabel til temperature input
         self.wanted_temp = tk.StringVar(value="")
-        tk.Label(change_panel, text="Ønsket temperatur (℃):", anchor="w").pack(fill="x", padx=8, pady=(8, 2))
+        tk.Label(change_panel, text="Ønsket temperatur (C):", anchor="w").pack(fill="x", padx=8, pady=(8, 2))
         tk.Entry(change_panel, textvariable=self.wanted_temp).pack(fill="x", padx=8, pady=(0, 8))
 
         # CO2 niveau med 3 bullets
@@ -88,7 +102,7 @@ class SettingsPage(Page):
 
         tk.Radiobutton(change_panel, text="Lav", variable=self.co2_level_var, value="Lav").pack(anchor="w", padx=12)
         tk.Radiobutton(change_panel, text="Mellem", variable=self.co2_level_var, value="Mellem").pack(anchor="w", padx=12)
-        tk.Radiobutton(change_panel, text="Høj", variable=self.co2_level_var, value="Hoj").pack(anchor="w", padx=12)
+        tk.Radiobutton(change_panel, text="Høj", variable=self.co2_level_var, value="Høj").pack(anchor="w", padx=12)
 
         # Spacer så knapperne bliver i bunden af change_panel
         tk.Frame(change_panel).pack(fill="both", expand=True)
@@ -105,7 +119,7 @@ class SettingsPage(Page):
 
         gardin_op = tk.Button(
             gardin_row,
-            text="↑",
+            text="Op",
             width=8,
             height=6,
         )
@@ -115,7 +129,7 @@ class SettingsPage(Page):
 
         gardin_ned = tk.Button(
             gardin_row,
-            text="↓",
+            text="Ned",
             width=8,
             height=6,
         )
@@ -123,7 +137,7 @@ class SettingsPage(Page):
 
         vindue_op = tk.Button(
             vindue_row,
-            text="↑",
+            text="Op",
             width=8,
             height=6,
         )
@@ -133,7 +147,7 @@ class SettingsPage(Page):
 
         vindue_ned = tk.Button(
             vindue_row,
-            text="↓",
+            text="Ned",
             width=8,
             height=6,
         )
