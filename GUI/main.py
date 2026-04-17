@@ -69,24 +69,18 @@ class GUI:
             try:
                 room_temp = self._parse_sensor_response(self.client.get_room_temp())
                 room_co2 = self._parse_sensor_response(self.client.get_room_co2())
+                outside_temp=self._parse_sensor_response(self.client.get_outside_temp())
+                light = self._parse_sensor_response(self.client.get_light())
 
                 if room_temp is not None:
                     self.room_temp = room_temp
                 if room_co2 is not None:
                     self.room_co2 = room_co2
+                if outside_temp is not None:
+                    self.temp_outside = outside_temp
+                if light is not None:
+                    self.light = light
 
-                # Hvis client senere får metoder for ude-temperatur og lys, bruger GUI'en dem automatisk.
-                get_outside_temp = getattr(self.client, "get_outside_temp", None)
-                if callable(get_outside_temp):
-                    outside_temp = get_outside_temp()
-                    if outside_temp is not None:
-                        self.temp_outside = outside_temp
-
-                get_light = getattr(self.client, "get_light", None)
-                if callable(get_light):
-                    light_value = get_light()
-                    if light_value is not None:
-                        self.light = light_value
             except Exception as error:
                 print(f"Fejl ved hentning af realtidsdata: {error}")
 

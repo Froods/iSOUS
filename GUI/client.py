@@ -11,7 +11,7 @@ import struct
 #   - Parameter 2: co2
 CMD_SET_DESIRED_VALUES = 0x01
 
-# - 0x02: Læs nuværende temperatur
+# - 0x02: Læs nuværende inde temperatur
 #   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
 #   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
 CMD_GET_ROOM_TEMP = 0x02
@@ -20,6 +20,16 @@ CMD_GET_ROOM_TEMP = 0x02
 #   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
 #   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
 CMD_GET_ROOM_CO2 = 0x03
+
+# - 0x04: Læs nuværende ude temperatur
+#   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_GET_OUTSIDE_TEMP = 0x04
+
+# - 0x04: Læs nuværende lys-niveau
+#   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_GET_LIGHT = 0x05
 
 ###########################
 
@@ -102,6 +112,29 @@ class Client:
         else:
             print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
             return None
+
+    def get_outside_temp(self):
+        self.ser.reset_input_buffer()
+        self.__send_command_UART(cmd=CMD_GET_OUTSIDE_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        response = self.ser.read(EXPECTED_BYTES)
+
+        if len(response) == EXPECTED_BYTES:
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+            print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+            return None
+
+    def get_light(self):
+        self.ser.reset_input_buffer()
+        self.__send_command_UART(cmd=CMD_GET_LIGHT, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        response = self.ser.read(EXPECTED_BYTES)
+        if len(response) == EXPECTED_BYTES:
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+             print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+             return None
 
     # --- Private methods ---
 
