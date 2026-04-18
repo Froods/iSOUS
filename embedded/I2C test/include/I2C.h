@@ -2,6 +2,22 @@
 #include <stdint.h>
 
 /**
+ * @enum SCD30_Status
+ * @brief Returværdi for I2C start/write metoder.
+ *
+ * Bruges til at indikere om der sker fejl på I2C bussen,
+ * eller hvad der gik galt.
+ */
+enum I2C_Status {
+  I2C_OK,
+  I2C_START_ERROR,
+  I2C_ADDR_NACK,
+  I2C_DATA_NACK,
+  I2C_BUS_ERROR,
+  I2C_TIMEOUT
+};
+
+/**
  * @class I2C
  * @brief Low-level I2C (TWI) driver til ATmega2560.
  *
@@ -19,7 +35,7 @@ public:
   /**
   * @brief Sender start condition
   */
-  void start();
+  I2C_Status start();
 
   /**
   * @brief Sender stop condition
@@ -30,7 +46,7 @@ public:
   * @brief Skriver en byte på bussen
   * @param data Byte som skal sendes
   */
-  void write(uint8_t data);
+  I2C_Status write(uint8_t data);
 
   /**
   * @brief Læser en byte fra bussen
