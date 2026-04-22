@@ -122,6 +122,7 @@ class SettingsPage(Page):
             text="Op",
             width=8,
             height=6,
+            command=self.app.open_curtain
         )
         gardin_op.pack()
 
@@ -132,6 +133,7 @@ class SettingsPage(Page):
             text="Ned",
             width=8,
             height=6,
+            command=self.app.close_curtain
         )
         gardin_ned.pack()
 
@@ -140,6 +142,7 @@ class SettingsPage(Page):
             text="Op",
             width=8,
             height=6,
+            command=self.app.open_window
         )
         vindue_op.pack()
 
@@ -150,6 +153,7 @@ class SettingsPage(Page):
             text="Ned",
             width=8,
             height=6,
+            command=self.app.close_window
         )
         vindue_ned.pack()
 

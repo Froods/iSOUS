@@ -18,6 +18,8 @@ class GUI:
         self.room_co2 = None
         self.light = None
         self.manual = False
+        self.window_open = False
+        self.curtain_open = False
 
         container = tk.Frame(self.root)
         container.pack()
@@ -33,6 +35,43 @@ class GUI:
         # Startside
         self.show_home()
         self.update_sensor_values()
+
+    #Vindue og gardin åben luk metoder
+    def open_window(self):
+        if self.window_open:
+            print("Vinduet er allerede åbent")
+            return
+
+        if self.client is not None:
+            self.client.set_window_state(True)
+            self.window_open = True
+
+    def close_window(self):
+        if not self.window_open:
+            print("Vinduet er allerede lukket")
+            return
+
+        if self.client is not None:
+            self.client.set_window_state(False)
+            self.window_open = False
+
+    def open_curtain(self):
+        if self.curtain_open:
+            print("Gardinet er allerede åbent")
+            return
+
+        if self.client is not None:
+            self.client.set_curtain_state(True)
+            self.curtain_open = True
+
+    def close_curtain(self):
+        if not self.curtain_open:
+            print("Gardinet er allerede lukket")
+            return
+
+        if self.client is not None:
+            self.client.set_curtain_state(False)
+            self.curtain_open = False
 
     # Oprettelse af client, så GUI'en stadig kan starte uden seriel forbindelse.
     def _create_client(self, port, baudrate, timeout):

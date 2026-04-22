@@ -26,10 +26,20 @@ CMD_GET_ROOM_CO2 = 0x03
 #   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
 CMD_GET_OUTSIDE_TEMP = 0x04
 
-# - 0x04: Læs nuværende lys-niveau
+# - 0x05: Læs nuværende lys-niveau
 #   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
 #   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
 CMD_GET_LIGHT = 0x05
+
+# - 0x06: Send vindue status
+#   - Parameter 1: åben(1)/lukket(0)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_SET_WINDOW_STATE = 0x06
+
+# - 0x07: Set gardin status
+#   - Parameter 1: åben(1)/lukket(0)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_SET_CURTAIN_STATE = 0x07
 
 ###########################
 
@@ -135,6 +145,28 @@ class Client:
         else:
              print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
              return None
+
+    def set_window_state(self, is_open):
+        if self.ser.is_open:
+            par1 = 1 if is_open else 0
+            self.__send_command_UART(
+                cmd=CMD_SET_WINDOW_STATE,
+                par1=par1,
+                par2=PARAMETER_OMITTED
+            )
+        else:
+            print("Error: Ikke forbundet til nogen port")
+
+    def set_curtain_state(self, is_open):
+        if self.ser.is_open:
+            par1 = 1 if is_open else 0
+            self.__send_command_UART(
+                cmd=CMD_SET_CURTAIN_STATE,
+                par1=par1,
+                par2=PARAMETER_OMITTED
+            )
+        else:
+            print("Error: Ikke forbundet til nogen port")
 
     # --- Private methods ---
 
