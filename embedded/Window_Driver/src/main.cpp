@@ -5,7 +5,7 @@ int main () {
 
 init(); //init timers on arduino
 
-init_Motor_pins(); //init motor pins
+initWindowMotorPins(); //init motor pins
 
 while (1) //test the motor for ever
 {

@@ -1,13 +1,15 @@
 #include "window_driver.h"
 #include <Arduino.h>
 
+static bool isOpen = false;
+
 //Defining motor pins
 // we are using the digital pins 22 (Blue), 24 (Pink), 26 (Yellow), 28 (Orange)
 int motor_Pins[4] = {22,24,26,28};
 
 //init pins:
 //Making motor pins become output:
-void init_Motor_pins() {
+void initWindowMotorPins() {
     for(int i = 0; i < 4; i++) {
         pinMode(motor_Pins[i], OUTPUT);
     }
@@ -86,3 +88,44 @@ void test_Of_Motor() {
   delay(1000);
 }
 
+void open() {
+if (isOpen == false) 
+  {
+  //to move the motor 1 full rotation in one direction we need to move the motor some stages:
+  //To move the motor 1 step (5 degrees), we need to go through 64 stages.
+  //And then to move the motor 360 degrees, we need to go through 64 steps.
+  //therefore to drive a full direction, we need to make 64x64 = 4096 stages
+  // Drive 4096 steps in one direction
+  for (int i = 0; i < 4096; i++) {
+    move_Motor_1_stage(true);
+    delay(2); // the pause between each stage. Should NOT be less than 1-2 ms
+    }
+
+  isOpen = true;
+  } 
+  else 
+  {
+  //Does nothing because window is already open
+  }
+}
+
+void close() {
+if (isOpen == true) 
+  {
+  //to move the motor 1 full rotation in one direction we need to move the motor some stages:
+  //To move the motor 1 step (5 degrees), we need to go through 64 stages.
+  //And then to move the motor 360 degrees, we need to go through 64 steps.
+  //therefore to drive a full direction, we need to make 64x64 = 4096 stages
+  // Drive 4096 steps in one direction
+  for (int i = 0; i < 4096; i++) {
+    move_Motor_1_stage(false);
+    delay(2); // the pause between each stage. Should NOT be less than 1-2 ms
+    }
+
+  isOpen = false;
+  } 
+  else 
+  {
+  //Does nothing because window is already closed
+  }
+}
