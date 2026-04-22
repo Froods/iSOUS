@@ -73,6 +73,32 @@ class GUI:
             self.client.set_curtain_state(False)
             self.curtain_open = False
 
+    # Tilføjet metode til at sende ønsket temperatur og CO2 via CMD_SET_DESIRED_VALUES.
+    def save_desired_values(self, temp_text, co2_level):
+        if self.client is None:
+            print("Error: Ikke forbundet til nogen port")
+            return
+
+        try:
+            temp_value = int(float(temp_text))
+        except ValueError:
+            print("Fejl: Ønsket temperatur skal være et tal")
+            return
+
+        co2_values = {
+            "Lav": 1,
+            "Mellem": 2,
+            "Høj": 3,
+        }
+
+        co2_value = co2_values.get(co2_level)
+        if co2_value is None:
+            print("Fejl: Ugyldigt CO2-niveau")
+            return
+
+        self.client.send_desired_values(temp=temp_value, co2=co2_value)
+        print(f"Sendte ønskede værdier: temperatur={temp_value}, co2={co2_value}")
+
     # Oprettelse af client, så GUI'en stadig kan starte uden seriel forbindelse.
     def _create_client(self, port, baudrate, timeout):
         try:

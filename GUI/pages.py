@@ -97,12 +97,12 @@ class SettingsPage(Page):
         tk.Entry(change_panel, textvariable=self.wanted_temp).pack(fill="x", padx=8, pady=(0, 8))
 
         # CO2 niveau med 3 bullets
-        self.co2_level_var = tk.StringVar(value="Mellem")
+        self.wanted_co2 = tk.StringVar(value="Mellem")
         tk.Label(change_panel, text="CO2 niveau:", anchor="w").pack(fill="x", padx=8, pady=(2, 2))
 
-        tk.Radiobutton(change_panel, text="Lav", variable=self.co2_level_var, value="Lav").pack(anchor="w", padx=12)
-        tk.Radiobutton(change_panel, text="Mellem", variable=self.co2_level_var, value="Mellem").pack(anchor="w", padx=12)
-        tk.Radiobutton(change_panel, text="Høj", variable=self.co2_level_var, value="Høj").pack(anchor="w", padx=12)
+        tk.Radiobutton(change_panel, text="Lav", variable=self.wanted_co2, value="Lav").pack(anchor="w", padx=12)
+        tk.Radiobutton(change_panel, text="Mellem", variable=self.wanted_co2, value="Mellem").pack(anchor="w", padx=12)
+        tk.Radiobutton(change_panel, text="Høj", variable=self.wanted_co2, value="Høj").pack(anchor="w", padx=12)
 
         # Spacer så knapperne bliver i bunden af change_panel
         tk.Frame(change_panel).pack(fill="both", expand=True)
@@ -172,6 +172,13 @@ class SettingsPage(Page):
             knap_row,
             text="Gem",
             width=15,
-            # command=
+            command=self.save_settings,
         )
         save_button.pack(side="right")
+
+    #Tilføjet metode der læser settings-felterne og sender dem videre til GUI-logikken.
+    def save_settings(self):
+        self.app.save_desired_values(
+            temp_text=self.wanted_temp.get(),
+            co2_level=self.wanted_co2.get(),
+        )
