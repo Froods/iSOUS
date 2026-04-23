@@ -1,9 +1,13 @@
 #include <Arduino.h>
 #include "UARTinterface.h"
 
-int main() {
-	while(1) {
-		Serial.print("fisse");
-	}
-	return 0;
+
+UARTinterface* fisse;
+
+void setup() {
+    fisse = new UARTinterface(9600);
+}
+
+void loop() {
+    fisse->update();
 }

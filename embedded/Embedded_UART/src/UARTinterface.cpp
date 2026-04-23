@@ -2,8 +2,12 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+
+
 void UARTinterface::init(uint32_t baudrate) {
 	Serial.begin(baudrate);
+	_delay_ms(1000);
+	Serial.print("fisse startet");
 }
 
 UARTinterface::UARTinterface(uint32_t baudrate) {
