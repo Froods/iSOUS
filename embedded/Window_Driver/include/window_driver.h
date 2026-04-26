@@ -2,6 +2,6 @@
 
 void initWindowMotorPins();
 
-void move_Motor_1_stage (bool direction);
+void moveMotor1Stage (bool direction);
 
 void test_Of_Motor();
