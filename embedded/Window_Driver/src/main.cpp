@@ -12,6 +12,5 @@ while (1) //test the motor for ever
   test_Of_Motor();
 }
 
-
   return 0;
 }

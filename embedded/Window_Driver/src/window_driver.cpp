@@ -1,7 +1,7 @@
 #include "window_driver.h"
 #include <Arduino.h>
 
-static bool isOpen = false;
+volatile bool isOpen = false;
 
 //Defining motor pins
 // we are using the digital pins 22 (Blue), 24 (Pink), 26 (Yellow), 28 (Orange)
@@ -66,17 +66,17 @@ void moveMotor1Stage (bool direction) {
   }
 }
 
-void open() {
+void openWindow() {
 if (isOpen == false) 
   {
   //to move the motor 1 full rotation in one direction we need to move the motor some stages:
-  //To move the motor 1 step (5 degrees), we need to go through 64 stages.
+  //To move the motor 1 step (5.625 degrees), we need to go through 64 stages.
   //And then to move the motor 360 degrees, we need to go through 64 steps.
   //therefore to drive a full direction, we need to make 64x64 = 4096 stages
   // Drive 4096 steps in one direction
   for (int i = 0; i < 4096; i++) {
-    moveMotor1Stage(true);
-    delay(2); // the pause between each stage. Should NOT be less than 1-2 ms
+    moveMotor1Stage(true); //clockwise
+    _delay_ms(5); // the pause between each stage.
     }
 
   isOpen = true;
@@ -87,17 +87,17 @@ if (isOpen == false)
   }
 }
 
-void close() {
+void closeWindow() {
 if (isOpen == true) 
   {
   //to move the motor 1 full rotation in one direction we need to move the motor some stages:
-  //To move the motor 1 step (5 degrees), we need to go through 64 stages.
+  //To move the motor 1 step (5.625 degrees), we need to go through 64 stages.
   //And then to move the motor 360 degrees, we need to go through 64 steps.
   //therefore to drive a full direction, we need to make 64x64 = 4096 stages
   // Drive 4096 steps in one direction
   for (int i = 0; i < 4096; i++) {
-    moveMotor1Stage(false);
-    delay(2); // the pause between each stage. Should NOT be less than 1-2 ms
+    moveMotor1Stage(false); //anti-clockwise
+    _delay_ms(5); // the pause between each stage.
     }
 
   isOpen = false;
@@ -109,23 +109,12 @@ if (isOpen == true)
 }
 
 void test_Of_Motor() {
-  //to move the motor 1 full rotation in one direction we need to move the motor some stages:
-  //To move the motor 1 step (5 degrees), we need to go through 64 stages.
-  //And then to move the motor 360 degrees, we need to go through 64 steps.
-  //therefore to drive a full direction, we need to make 64x64 = 4096 stages
-  // Drive 4096 steps in one direction
-  for (int i = 0; i < 4096; i++) {
-    moveMotor1Stage(true);
-    delay(2); // the pause between each stage. Should NOT be less than 1-2 ms
-  }
+
+  openWindow();
   
-  delay(1000); // wait one second
+  _delay_ms(1000);
+
+  closeWindow();
   
-  // Drive the motor the other direction
-  for (int i = 0; i < 4096; i++) {
-    moveMotor1Stage(false);
-    delay(2); //the pause between each stage. Should NOT be less than 1-2 ms
-  }
-  
-  delay(1000);
+  _delay_ms(1000);
 }
