@@ -1,7 +1,9 @@
 #pragma once    
 
-void init_Curtain_Motor_pin();
+void initCurtainMotorPWM();
 
-void setup_pwm();
+void rollOutCurtain();
 
-void set_servo_angle(float pulse_width_us);
+void roolInCurtain();
+
+void test_of_curtain();

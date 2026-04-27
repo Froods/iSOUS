@@ -3,21 +3,13 @@
 
 int main () {
 
-    init_Curtain_Motor_pin();
-    
-    setup_pwm();
+    init();
 
-    while (1) {
-        // Eksempel: Drej fra 0 til 180 grader
-        set_servo_angle(500);  // 0 grader
-        _delay_ms(1000);
-        
-        set_servo_angle(1500); // 90 grader
-        _delay_ms(1000);
-        
-        set_servo_angle(2500); // 180 grader
-        _delay_ms(1000);
+    initCurtainMotorPWM();
 
-}
+    while (1)
+    {
+        test_of_curtain();
+    }
     return 0;
 }
