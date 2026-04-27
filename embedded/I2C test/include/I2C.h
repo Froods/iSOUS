@@ -37,6 +37,8 @@ public:
   */
   I2C_Status start();
 
+  void recoverbus();
+
   /**
   * @brief Sender stop condition
   */

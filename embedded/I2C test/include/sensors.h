@@ -3,6 +3,8 @@
 #include <stdint.h>
 
 
+
+
 /**
  * @enum SCD30_Status
  * @brief Returværdi for SCD30::readData().
@@ -28,11 +30,16 @@ enum SCD30_Status
 class SCD30 {
 public:
   /**
-  * @brief constructor. Starter kontinuerlig måling i sensoren
+  * @brief constructor. 
   * @param I2C_BUS reference til I2C-bussen. Addresse er hardcoded, da vi har én sensor
   */
   SCD30(I2C &i2c);
   
+
+  /**
+   * @Brief initialiser sensoren til kontinuerlig måling
+   */
+  void begin();
   /**
   *@brief Opdaterer temperatur og CO2 med nyeste målinger
   */

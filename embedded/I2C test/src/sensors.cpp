@@ -45,28 +45,33 @@ static uint8_t generateCRCGeneric(const uint8_t* data, size_t count, uint8_t ini
     return crc;
 }
 
+void SCD30::begin() {
+    I2C_Status status;
+    
+    // Step 1: Force a Stop and wait for the sensor to breathe
+    I2C_BUS.stop();
+    _delay_ms(100);
+
+    // Step 2: The Start Measurement Sequence
+    // Command: 0x0010, Args: 0x0000, CRC: 0x81
+    I2C_BUS.start();
+    if (I2C_BUS.write(Adresse << 1) == I2C_OK) {
+        _delay_us(50); // Small "Thinking" delay for the sensor
+        I2C_BUS.write(0x00);
+        I2C_BUS.write(0x10);
+        I2C_BUS.write(0x00);
+        I2C_BUS.write(0x00);
+        I2C_BUS.write(0x81);
+    }
+    I2C_BUS.stop();
+    
+    Serial.println("SCD30: Measurement Command Sent.");
+}
 
 
 
 SCD30::SCD30(I2C &i2c) : I2C_BUS(i2c) 
-{
-  //start kontinuerlig måling uden trykkompensation (afsnit 1.3.1 i SCD30 datablad)
-  //Kommando: 0x0010, argument 0x0000.
-  uint8_t arg[] = {0x00, 0x00};
-  uint8_t crc = generateCRCGeneric(arg,2);
-
-  I2C_BUS.start(); //start bit
-  I2C_BUS.write(Adresse << 1); //I2C adresse er 7-BIT, men I2C sender 8-bit. De øverste 7-Bits er adresse, og den nederste bit er read/write. Bit 0 = 0 (write).  
-  I2C_BUS.write(0x00); //cmd 0x0010 MSB
-  I2C_BUS.write(0x10); //cmd 0x0010 LSB
-  I2C_BUS.write(arg[0]);
-  I2C_BUS.write(arg[1]);
-  I2C_BUS.write(crc);
-  I2C_BUS.stop();
-
-  _delay_ms(10); //anbefalet delay efter kommunikation (fra datasheet)
-
-}
+{}
 
 
 
@@ -77,6 +82,7 @@ SCD30_Status SCD30::readData()
   
   uint8_t timeout = 0;
   uint8_t received_lsb = 0;
+
   while (received_lsb != 1) 
   {
     I2C_BUS.start(); //start bit
@@ -142,15 +148,16 @@ SCD30_Status SCD30::readData()
   uint8_t temp_CRC1 = I2C_BUS.read(0);
   uint8_t temp_MSB2 = I2C_BUS.read(0);
   uint8_t temp_LSB2 = I2C_BUS.read(0);
-  uint8_t temp_CRC2 = I2C_BUS.read(1); //NACK (Byte 12, inden fugtighed kommer)
+  uint8_t temp_CRC2 = I2C_BUS.read(0); //ACK (Byte 12, inden fugtighed kommer)
 
-  //Hvis vi ikke kan cutte kort, læser vi lige de fugtighedsdata også
-  //uint8_t hum_MSB1 = I2C_BUS.read(0);
-  //uint8_t hum_LSB1 = I2C_BUS.read(0);
-  //uint8_t hum_CRC1 = I2C_BUS.read(0);
-  //uint8_t hum_MSB2 = I2C_BUS.read(0);
-  //uint8_t hum_LSB2 = I2C_BUS.read(0);
-  //uint8_t hum_CRC2 = I2C_BUS.read(1); // NACK (byte 18, sidste i transmissionen)
+  //---------------------VIGTIGT-------------------------------------------
+  //MÅ IKKE KOMMENTERES UD. SENSOR BLIVER FORVIRRET HVIS ALT IKKE LÆSES!!!
+  uint8_t hum_MSB1 = I2C_BUS.read(0);
+  uint8_t hum_LSB1 = I2C_BUS.read(0);
+  uint8_t hum_CRC1 = I2C_BUS.read(0);
+  uint8_t hum_MSB2 = I2C_BUS.read(0);
+  uint8_t hum_LSB2 = I2C_BUS.read(0);
+  uint8_t hum_CRC2 = I2C_BUS.read(1); //ACK (byte 18, sidste i transmissionen)
 
   I2C_BUS.stop();
  
