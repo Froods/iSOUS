@@ -2,6 +2,37 @@
 #include "i2c.h"
 #include <stdint.h>
 
+
+
+//command bits
+#define TSL2561_COMMAND_BIT (0x80) ///< Must be 1
+#define TSL2561_CLEAR_BIT \
+  (0x40) ///< Clears any pending interrupt (write 1 to clear)
+#define TSL2561_WORD_BIT (0x20)  ///< 1 = read/write word (rather than byte)
+#define TSL2561_BLOCK_BIT (0x10) ///< 1 = using block read/write
+
+#define TSL2561_CONTROL_POWERON (0x03) ///< Control register setting to turn on
+#define TSL2561_CONTROL_POWEROFF \ (0x00) ///< Control register setting to turn off
+
+/** TSL2561 I2C Registers */
+enum {
+  TSL2561_REGISTER_CONTROL = 0x00,          // Control/power register
+  TSL2561_REGISTER_TIMING = 0x01,           // Set integration time register
+  TSL2561_REGISTER_THRESHHOLDL_LOW = 0x02,  // Interrupt low threshold low-byte
+  TSL2561_REGISTER_THRESHHOLDL_HIGH = 0x03, // Interrupt low threshold high-byte
+  TSL2561_REGISTER_THRESHHOLDH_LOW = 0x04,  // Interrupt high threshold low-byte
+  TSL2561_REGISTER_THRESHHOLDH_HIGH =
+      0x05,                           // Interrupt high threshold high-byte
+  TSL2561_REGISTER_INTERRUPT = 0x06,  // Interrupt settings
+  TSL2561_REGISTER_CRC = 0x08,        // Factory use only
+  TSL2561_REGISTER_ID = 0x0A,         // TSL2561 identification setting
+  TSL2561_REGISTER_CHAN0_LOW = 0x0C,  // Light data channel 0, low byte
+  TSL2561_REGISTER_CHAN0_HIGH = 0x0D, // Light data channel 0, high byte
+  TSL2561_REGISTER_CHAN1_LOW = 0x0E,  // Light data channel 1, low byte
+  TSL2561_REGISTER_CHAN1_HIGH = 0x0F  // Light data channel 1, high byte
+};
+
+
 /**
  * @brief Driver for the TSL2561 ambient light sensor.
  *
