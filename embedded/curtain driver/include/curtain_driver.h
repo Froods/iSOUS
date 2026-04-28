@@ -4,6 +4,6 @@ void initCurtainMotorPWM();
 
 void rollOutCurtain();
 
-void roolInCurtain();
+void rollInCurtain();
 
 void test_of_curtain();

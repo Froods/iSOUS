@@ -3,8 +3,6 @@
 
 int main () {
 
-    init();
-
     initCurtainMotorPWM();
 
     while (1)

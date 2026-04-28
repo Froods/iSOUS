@@ -13,16 +13,16 @@ void initCurtainMotorPWM() {
     DDRE |= (1 << PE4);
 
     //set mode 14 (Fast PWM, TOP = ICR3)
-    TCCR3A = (1 << WGM31);
-    TCCR3B = (1 << WGM32);
-    TCCR3B = (1 << WGM33); 
+    TCCR3A |= (1 << WGM31);
+    TCCR3B |= (1 << WGM32);
+    TCCR3B |= (1 << WGM33); 
 
     //use COM3B1 to make timer B run in 'inverting mode'
-    TCCR3A = (1 << COM3B0);
-    TCCR3A = (1 << COM3B1);
+    TCCR3A |= (1 << COM3B0);
+    TCCR3A |= (1 << COM3B1);
 
     //use CS31 to make prescaler 8:
-    TCCR3B = (1 << CS31);
+    TCCR3B |= (1 << CS31);
 
     //Make the top value 39999 to get 50 hz (20 ms period)
     ICR3 = 39999;
@@ -43,7 +43,7 @@ void rollOutCurtain() {
     }
 }
 
-void roolInCurtain() {
+void rollInCurtain() {
     if (isOut == true) {
         OCR3B = 35999;
         _delay_ms(4000);
@@ -56,7 +56,9 @@ void roolInCurtain() {
 
 void test_of_curtain() {
     rollOutCurtain();
+    rollOutCurtain();
     _delay_ms(1000);
-    roolInCurtain();
+    rollInCurtain();
+    rollInCurtain();
     _delay_ms(1000);
 }
