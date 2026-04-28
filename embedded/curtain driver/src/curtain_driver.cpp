@@ -14,8 +14,8 @@ void initCurtainMotorPWM() {
 
     //set mode 14 (Fast PWM, TOP = ICR3)
     TCCR3A = (1 << WGM31);
-    TCCR3B = (1 << WGM33);
-    TCCR3B = (1 << WGM32); 
+    TCCR3B = (1 << WGM32);
+    TCCR3B = (1 << WGM33); 
 
     //use COM3B1 to make timer B run in 'inverting mode'
     TCCR3A = (1 << COM3B0);
@@ -35,8 +35,8 @@ void initCurtainMotorPWM() {
 void rollOutCurtain() {
     if (isOut == false) {
         OCR3B = 37999;
-        //indsæt ordentligt delay med timere:
         _delay_ms(4000);
+        OCR3B = 36999;
         isOut = true;
     } else {
         //Do nothing
@@ -46,8 +46,8 @@ void rollOutCurtain() {
 void roolInCurtain() {
     if (isOut == true) {
         OCR3B = 35999;
-        //indsæt ordentligt delay med timere:
         _delay_ms(4000);
+        OCR3B = 36999;
         isOut = false;
     } else {
         //Do nothing
