@@ -5,13 +5,11 @@ int main () {
 
     init(); //init timers on arduino
 
-    initCurtainMotorPWM(); //init timer 3
-
-    initTimer2Timer(); //init timer 0
+    CurtainMotor p; //make a curtainmotor class p
 
     while (1)
     {
-        test_of_curtain(); //test curtain
+        p.test_of_curtain(); //test curtain p
     }
     return 0;
 }

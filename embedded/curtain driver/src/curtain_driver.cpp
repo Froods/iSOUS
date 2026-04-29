@@ -4,9 +4,15 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-volatile bool isOut = false;
 
-void initCurtainMotorPWM() {
+CurtainMotor::CurtainMotor(){
+    initCurtainMotorPWM();
+    initTimer2Timer();
+    this->isOut = false;
+}
+
+
+void CurtainMotor::initCurtainMotorPWM() {
 
     //reset all registrers after init() is run:
     TCCR3A = 0;
@@ -39,7 +45,7 @@ void initCurtainMotorPWM() {
     OCR3B = 36999;
 }
 
-void initTimer2Timer() {
+void CurtainMotor::initTimer2Timer() {
 
     //reset all registrers after init() is run:
     //Which also puts timer 0 in normal mode
@@ -57,41 +63,75 @@ void initTimer2Timer() {
     TCCR2B |= (1 << CS22);
 } 
 
-void delayForCutain() {
-    TIFR2 |= (1<<0); //reset timer overflow flag
-    TCNT2 = 255-156; //make timer only take 156 steps
-    int numberOfOverflows = 0; //int to keep track of overflows
-    while (numberOfOverflows != 849) { //stay here indtil 849 overflows has passed
-        while ((TIFR2 & (1<<0)) == 0) {} //wait for the timer to reach an overflow (sets up flag)
-        TIFR2 |= (1<<0);//reset timer overflow flag
-        TCNT2 = 255-156;//make timer only take 156 steps
-        numberOfOverflows++; //increments numberofoverflow when overflow happen
+void CurtainMotor::delayForCutain() {
+    //reset timer overflow flag
+    TIFR2 |= (1<<0); 
+
+    //make timer only take 156 steps
+    TCNT2 = 255-156; 
+
+    //int to keep track of overflows
+    int numberOfOverflows = 0; 
+
+    //stay here indtil 849 overflows has passed 
+    while (numberOfOverflows != 849) { 
+
+        //wait for the timer to reach an overflow (sets up flag)
+        while ((TIFR2 & (1<<0)) == 0) {} 
+
+        //reset timer overflow flag
+        TIFR2 |= (1<<0);
+
+        //make timer only take 156 steps
+        TCNT2 = 255-156;
+
+        //increments numberofoverflow when overflow happen
+        numberOfOverflows++; 
     }
+
 }
 
-void rollOutCurtain() {
-    if (isOut == false) {
+void CurtainMotor::rollOutCurtain() {
+    //check if isOut is false to avoid rollOut twice in a row
+    if (this->isOut == false) {
+
+        //sets dutycycle to 2 ms to go full speed to clockwise
         OCR3B = 37999;
+
+        //executes delay function to wait 8,53 sec
         delayForCutain();
+
+        //sets dutycycle to 1,5 ms to make the motor stop
         OCR3B = 36999;
-        isOut = true;   
+
+        //sets isOut to true after curtain is rolled out
+        this->isOut = true;   
     } else {
         //Do nothing
     }
 }
 
-void rollInCurtain() {
-    if (isOut == true) {
+void CurtainMotor::rollInCurtain() {
+    //check if isOut is true to avoid rollIn twice in a row
+    if (this->isOut == true) {
+
+        //sets dutycycle to 1 ms to go full speed to anti-clockwise
         OCR3B = 35999;
+
+        //executes delay function to wait 8,53 sec
         delayForCutain();
+
+        //sets dutycycle to 1,5 ms to make the motor stop
         OCR3B = 36999;
-        isOut = false;
+        
+        //sets isOut to false after curtain is rolled in
+        this->isOut = false;   
     } else {
         //Do nothing
     }
 }
 
-void test_of_curtain() {
+void CurtainMotor::test_of_curtain() {
     rollOutCurtain();
     rollOutCurtain();
     _delay_ms(2000);
