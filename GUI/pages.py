@@ -51,16 +51,17 @@ class HomePage(Page):
         )
         settings_button.pack(side="left", padx=(0, 10))
 
-        stopauto_button = tk.Button(
+        # Gemmer reference til knappen, så dens tekst og farve kan opdateres ud fra manual-state.
+        self.stopauto_button = tk.Button(
             knap_center,
             text="Stop Automatisk \n Styring",
             width=15,
             height=2,
-            bg="green",
-            # tilføj stopauto logik
-            # command=
+            bg="red",
+            command=self.app.toggle_automatic_control,
         )
-        stopauto_button.pack(side="left")
+        self.stopauto_button.pack(side="left")
+        self.refresh_control_mode()
 
     # HomePage opdaterer alle fire realtime-felter fra GUI-attributterne.
     def refresh_realtime_data(self):
@@ -74,6 +75,19 @@ class HomePage(Page):
         self.temp_outside_var.set(f"Temperatur ude: {temp_outside_text}")
         self.co2_var.set(f"CO2 inde: {co2_text}")
         self.light_var.set(f"Lysintensitet: {light_text}")
+
+    # Opdaterer forsiden, så knappen viser om automatisk styring er aktiv eller stoppet.
+    def refresh_control_mode(self):
+        if self.app.manual:
+            self.stopauto_button.config(
+                text="Start Automatisk \n Styring",
+                bg="green",
+            )
+        else:
+            self.stopauto_button.config(
+                text="Stop Automatisk \n Styring",
+                bg="red",
+            )
 
 
 class SettingsPage(Page):

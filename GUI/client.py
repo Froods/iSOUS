@@ -7,8 +7,8 @@ import struct
 ###########################
 
 # - 0x01: Send ønskede værdier
-#   - Parameter 1: temperatur
-#   - Parameter 2: co2
+#   - Parameter 1: Temperatur
+#   - Parameter 2: CO2
 CMD_SET_DESIRED_VALUES = 0x01
 
 # - 0x02: Læs nuværende inde temperatur
@@ -149,22 +149,14 @@ class Client:
     def set_window_state(self, is_open):
         if self.ser.is_open:
             par1 = 1 if is_open else 0
-            self.__send_command_UART(
-                cmd=CMD_SET_WINDOW_STATE,
-                par1=par1,
-                par2=PARAMETER_OMITTED
-            )
+            self.__send_command_UART(cmd=CMD_SET_WINDOW_STATE, par1=par1, par2=PARAMETER_OMITTED)
         else:
             print("Error: Ikke forbundet til nogen port")
 
     def set_curtain_state(self, is_open):
         if self.ser.is_open:
             par1 = 1 if is_open else 0
-            self.__send_command_UART(
-                cmd=CMD_SET_CURTAIN_STATE,
-                par1=par1,
-                par2=PARAMETER_OMITTED
-            )
+            self.__send_command_UART(cmd=CMD_SET_CURTAIN_STATE, par1=par1, par2=PARAMETER_OMITTED)
         else:
             print("Error: Ikke forbundet til nogen port")
 

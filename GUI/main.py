@@ -20,6 +20,12 @@ class GUI:
         self.manual = False
         self.window_open = False
         self.curtain_open = False
+        # CO2-valg
+        self.co2_values = {
+            "Lav": 200,
+            "Mellem": 400,
+            "Høj": 600,
+        }
 
         container = tk.Frame(self.root)
         container.pack()
@@ -36,6 +42,15 @@ class GUI:
         self.show_home()
         self.update_sensor_values()
 
+    # Fælles metode til at skifte mellem manuel og automatisk styring.
+    def set_manual_mode(self, is_manual):
+        self.manual = is_manual
+        self.home_page.refresh_control_mode()
+
+    # Tilføjet knapfunktion til forsiden, så automatisk styring kan startes/stoppes manuelt.
+    def toggle_automatic_control(self):
+        self.set_manual_mode(not self.manual)
+
     #Vindue og gardin åben luk metoder
     def open_window(self):
         if self.window_open:
@@ -43,6 +58,7 @@ class GUI:
             return
 
         if self.client is not None:
+            self.set_manual_mode(True)
             self.client.set_window_state(True)
             self.window_open = True
 
@@ -52,6 +68,7 @@ class GUI:
             return
 
         if self.client is not None:
+            self.set_manual_mode(True)
             self.client.set_window_state(False)
             self.window_open = False
 
@@ -61,6 +78,7 @@ class GUI:
             return
 
         if self.client is not None:
+            self.set_manual_mode(True)
             self.client.set_curtain_state(True)
             self.curtain_open = True
 
@@ -70,6 +88,7 @@ class GUI:
             return
 
         if self.client is not None:
+            self.set_manual_mode(True)
             self.client.set_curtain_state(False)
             self.curtain_open = False
 
@@ -85,18 +104,20 @@ class GUI:
             print("Fejl: Ønsket temperatur skal være et tal")
             return
 
-        co2_values = {
-            "Lav": 1,
-            "Mellem": 2,
-            "Høj": 3,
-        }
+        # Validerer at ønsket temperatur ligger i det tilladte interval.
+        if temp_value < 0 or temp_value > 40:
+            print("Fejl: Ugyldigt valg. Temperaturen skal være mellem 0 og 40")
+            return
 
-        co2_value = co2_values.get(co2_level)
+        # Bruger den fælles CO2-mapping, så værdierne kun skal ændres ét sted.
+        co2_value = self.co2_values.get(co2_level)
         if co2_value is None:
             print("Fejl: Ugyldigt CO2-niveau")
             return
 
         self.client.send_desired_values(temp=temp_value, co2=co2_value)
+        # Når der gemmes ønskede værdier, genstartes automatisk styring.
+        self.set_manual_mode(False)
         print(f"Sendte ønskede værdier: temperatur={temp_value}, co2={co2_value}")
 
     # Oprettelse af client, så GUI'en stadig kan starte uden seriel forbindelse.
@@ -110,6 +131,7 @@ class GUI:
     # show_home opdaterer forsiden med de nyeste gemte attributter for alle realtime-felter.
     def show_home(self):
         self.home_page.refresh_realtime_data()
+        self.home_page.refresh_control_mode()
         self.home_page.show()
 
     def show_settings(self):
