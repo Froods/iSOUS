@@ -1,6 +1,6 @@
 #ifndef USERSETTINGS_H
 #define USERSETTINGS_H
-
+#include "UARTinterface.h"
 
 /**
  * @brief CO2Setting enum to represent different CO2 settings
@@ -29,10 +29,11 @@ class UserSettings {
 private:
     CO2Setting CO2Setting_;
     float targetTemp_;
+	UARTinterface uart_;
 
 public:
     // Constructor
-    UserSettings(CO2Setting setting, float temp);
+    UserSettings(CO2Setting setting, float temp, int baudrate);
 
     // Getters
     CO2Setting getCO2Setting() const;

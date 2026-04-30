@@ -7,10 +7,11 @@
  * 
  * Usersettings class is used to store the user settings for the CO2 setting and target temperature.
  * It has a constructor to initialize the settings, getters to retrieve the current settings, and setters to update the settings.
+ * When initializing, the uart baudrate should also be specified as the third parameter. This is necessary for the setter methods to work as intended.
  * 
  */
-UserSettings::UserSettings(CO2Setting setting, float temp)
-    : CO2Setting_(setting), targetTemp_(temp)
+UserSettings::UserSettings(CO2Setting setting, float temp, int baudrate)
+    : CO2Setting_(setting), targetTemp_(temp), uart_(UARTinterface(baudrate))
 {}
 
 /**
