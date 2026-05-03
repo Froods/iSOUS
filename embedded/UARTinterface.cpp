@@ -94,9 +94,19 @@ void UARTinterface::parseCommand() {
 			break;
 		case CMD_GET_ROOM_CO2:
 			Serial.print("Get room co2");
+
+			char co2 = static_cast<char>(settings_.getActualCO2());
+			char toSend[4] = {co2, 0x00, 0x00, 0x00};
+			sendResponse(toSend);
+
 			break;
 		case CMD_GET_OUTSIDE_TEMP:
 			Serial.print("Get outside temp");
+
+			char outTemp = static_cast<char>(settings_.getOutTemp());
+			char toSend[4] = {outTemp, 0x00, 0x00, 0x00};
+			sendResponse(toSend);
+
 			break;
 		case CMD_GET_LIGHT:
 			Serial.print("Get light");
