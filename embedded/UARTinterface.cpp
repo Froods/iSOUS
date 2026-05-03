@@ -79,9 +79,18 @@ void UARTinterface::parseCommand() {
 			Serial.print(par1);
 			Serial.print("co2: ");
 			Serial.print(par2);
+
+			settings_.setTargetTemp(static_cast<int>(par1));
+			settings_.setCO2Setting(static_cast<int>(par2));
+
 			break;
 		case CMD_GET_ROOM_TEMP:
 			Serial.print("Get room temp");
+
+			char roomTemp = static_cast<char>(settings_.getRoomTemp());
+			char toSend[4] = {roomTemp, 0x00, 0x00, 0x00};
+			sendResponse(toSend);
+
 			break;
 		case CMD_GET_ROOM_CO2:
 			Serial.print("Get room co2");
