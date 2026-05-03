@@ -27,7 +27,7 @@ private:
 	const char STOPBYTE = 0xFF;
 	const char PARAMETER_OMITTED = 0x00; // Kan godt være værdien skal ændres til noget andet da 0x00 kan blive set som en null terminator
 	const int EXPECTED_BYTES = 4;
- // UserSettings settings_;
+	UserSettings& settings_;
 
 	// Metoder
 	void parseCommand();
