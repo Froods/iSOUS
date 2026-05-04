@@ -15,7 +15,7 @@ void WindowMotor::initWindowMotorPins() {
     }
 }
 
-//A function to move the motor
+//function to move the motor
 //takes a bool as a parameter for which direction. 
 //True = clockwise
 void WindowMotor::moveMotor1Stage (bool direction) {

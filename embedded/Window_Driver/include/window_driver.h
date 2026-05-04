@@ -20,7 +20,6 @@ private:
     /**
      * @brief 
      * stages to make the motor spin with the 4 coils
-     * the motor spins when multiple coils is grounded
      * The O,Y,P,B stands for Orange, Yellow, Pink & Blue and is a refenrence to the cables on the ULN2003A
      */
     const bool stages_O_Y_P_B[8][4] = {
@@ -50,7 +49,7 @@ private:
 public:
 
     /**
-     * @brief Contructor for WindowMotor. Inits motorpins and Init isOpen to "false".
+     * @brief Constructor for WindowMotor. Inits motorpins and Init isOpen to "false".
      */
     WindowMotor();
 
@@ -71,7 +70,7 @@ public:
     void openWindow();
 
     /**
-     * @brief Open the window by taking 4096 steps in a anti-clockwise (minus-rotation) sequence
+     * @brief Close the window by taking 4096 steps in a anti-clockwise (minus-sequence) 
      */
     void closeWindow();
 
