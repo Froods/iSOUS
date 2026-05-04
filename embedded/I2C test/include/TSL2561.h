@@ -139,7 +139,7 @@ public:
    * @param address 7-bit I2C adresse for sensoren. Default 0x39 (ADDR pin floating).
    *                Brug 0x29 hvis ADDR er pulled low, 0x49 hvis pulled high.
    */
-  TSL2561(I2C &i2c, uint8_t address = 0x39);
+  TSL2561(I2C &i2c, uint8_t address = 0x29);
 
 
   /**
