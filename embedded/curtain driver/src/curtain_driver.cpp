@@ -134,8 +134,8 @@ void CurtainMotor::rollInCurtain() {
 void CurtainMotor::test_of_curtain() {
     rollOutCurtain();
     rollOutCurtain();
-    _delay_ms(2000);
+    _delay_ms(1000);
     rollInCurtain();
     rollInCurtain();
-    _delay_ms(2000);
+    _delay_ms(1000);
 }
