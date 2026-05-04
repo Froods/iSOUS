@@ -5,11 +5,11 @@ int main () {
 
 init(); //init timers on arduino
 
-initWindowMotorPins(); //init motor pins
+WindowMotor w;
 
 while (1) //test the motor
 {
-  test_Of_Motor();
+  w.test_Of_Motor();
 }
 
   return 0;
