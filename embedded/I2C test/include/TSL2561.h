@@ -12,7 +12,16 @@
 #define TSL2561_BLOCK_BIT (0x10) ///< 1 = using block read/write
 
 #define TSL2561_CONTROL_POWERON (0x03) ///< Control register setting to turn on
-#define TSL2561_CONTROL_POWEROFF \ (0x00) ///< Control register setting to turn off
+#define TSL2561_CONTROL_POWEROFF  (0x00) ///< Control register setting to turn off
+
+//skaleringer for lux afhænging af integrationstid (til beregning af lux)
+#define TSL2561_LUX_LUXSCALE (14)          ///< Scale by 2^14
+#define TSL2561_LUX_RATIOSCALE (9)         ///< Scale ratio by 2^9
+#define TSL2561_LUX_CHSCALE (10)           ///< Scale channel values by 2^10
+#define TSL2561_LUX_CHSCALE_TINT0 (0x7517) ///< 322/11 * 2^TSL2561_LUX_CHSCALE
+#define TSL2561_LUX_CHSCALE_TINT1 (0x0FE7) ///< 322/81 * 2^TSL2561_LUX_CHSCALE
+
+
 
 /** TSL2561 I2C Registers */
 enum {
