@@ -59,8 +59,8 @@ public:
     void initWindowMotorPins();
 
     /**
-     * @brief Moves motor 1 stage, tages direction as parameter. True = clockwise rotation
-     * @param direction
+     * @brief Moves motor 1 stage, takes direction as parameter.
+     * @param direction Bool. 0 = anti-clockwise direction, 1 = clockwise direction
      */
     void moveMotor1Stage (bool direction);
 
