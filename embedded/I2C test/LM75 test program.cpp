@@ -12,7 +12,7 @@ static void banner(const char *s) {
 }
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
     _delay_ms(200);
     Serial.println(F("\n=== LM75 bring-up ==="));
 

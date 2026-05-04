@@ -17,17 +17,17 @@ TSL2561_Status TSL2561::readData(){
     switch (this->integrationTime)
     {
     case TSL2561_INT_13MS:
-        delay_ms(15);
+        _delay_ms(15);
         break;
     
     case TSL2561_INT_101MS:
-        delay_ms(105);
+        _delay_ms(105);
         break;
     
-    case TSL2561_INT_402MS;
+    case TSL2561_INT_402MS:
     
     default:
-        delay (402);
+        _delay_ms (402);
         break;
     }
 
@@ -56,7 +56,7 @@ TSL2561_Status TSL2561::begin()
     return TSL2561_ID_ERROR; 
 
     writeRegister(TSL2561_REGISTER_TIMING, gain | integrationTime);
-    return TSL2561_ok;
+    return TSL2561_OK;
 }
 
 void TSL2561::writeRegister(uint8_t reg, uint8_t value)
