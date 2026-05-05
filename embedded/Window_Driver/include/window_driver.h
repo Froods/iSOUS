@@ -60,17 +60,17 @@ public:
 
     /**
      * @brief Moves motor 1 stage, takes direction as parameter.
-     * @param direction Bool. 0 = anti-clockwise direction, 1 = clockwise direction
+     * @param direction Bool. 0 = clockwise direction, 1 = anti-clockwise direction
      */
     void moveMotor1Stage (bool direction);
 
     /**
-     * @brief Open the window by taking 4096 steps in a clockwise rotation (plus-sequence)
+     * @brief Open the window by taking 3072 steps in a anti-clockwise rotation (plus-sequence)
      */
     void openWindow();
 
     /**
-     * @brief Close the window by taking 4096 steps in a anti-clockwise (minus-sequence) 
+     * @brief Close the window by taking 3072 steps in a clockwise (minus-sequence) 
      */
     void closeWindow();
 
