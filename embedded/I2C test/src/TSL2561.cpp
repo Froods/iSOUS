@@ -11,7 +11,7 @@ TSL2561::TSL2561(I2C &i2c, uint8_t address)
 
 TSL2561_Status TSL2561::readData(){
    //tænd for enheden ved at sætte kontrol bit til 0x03
-    enable();
+    if (enable() != TSL2561_OK) return TSL2561_BUS_ERROR;
 
     // vent x ms for ADC konvertering (afhængtigt af ing time)
     switch (this->integrationTime)
@@ -19,29 +19,34 @@ TSL2561_Status TSL2561::readData(){
     case TSL2561_INT_13MS:
         _delay_ms(15);
         break;
-    
+
     case TSL2561_INT_101MS:
         _delay_ms(105);
         break;
-    
+
     case TSL2561_INT_402MS:
-    
+
     default:
-        _delay_ms (402);
+        _delay_ms(402);
         break;
     }
 
     //Læs de 2 bytes fra kanal 0
-    this->broadband = readRegister16(TSL2561_REGISTER_CHAN0_LOW);
-    
+    if (readRegister16(TSL2561_REGISTER_CHAN0_LOW, this->broadband) != TSL2561_OK) {
+        disable(); //forsøg at slukke sensoren inden fejl returneres
+        return TSL2561_BUS_ERROR;
+    }
+
     //læs de 2 bytes fra kanal 1
-    this->ir = readRegister16(TSL2561_REGISTER_CHAN1_LOW);
+    if (readRegister16(TSL2561_REGISTER_CHAN1_LOW, this->ir) != TSL2561_OK) {
+        disable(); //forsøg at slukke sensoren inden fejl returneres
+        return TSL2561_BUS_ERROR;
+    }
+
+    this->lux = calculateLux(broadband, ir);
 
     //sluk for enheden
-    disable();
-
-    this->lux = calculateLux(broadband,ir);
-    return TSL2561_OK;
+    return disable();
 }
 
 uint32_t TSL2561::getLux()       { return lux; }
@@ -50,65 +55,66 @@ uint16_t TSL2561::getIR()        { return ir; }
 
 TSL2561_Status TSL2561::begin()
 {
-    uint8_t chip_id = readRegister8(TSL2561_REGISTER_ID);
+    uint8_t chip_id;
+    if (readRegister8(TSL2561_REGISTER_ID, chip_id) != TSL2561_OK) return TSL2561_BUS_ERROR;
 
-    if(chip_id & 0x05) //Chip id for TSL2561. Bruger AND, da revisionen kan være en anden, så længe bits for versionen er den samme = true
-    return TSL2561_ID_ERROR; 
+    // Bits 7:4 = PARTNO (skal være 0x5 for TSL2561). Bits 3:0 = REVNO (ignoreres).
+    if ((chip_id & 0xF0) != 0x50) return TSL2561_ID_ERROR;
 
-    writeRegister(TSL2561_REGISTER_TIMING, gain | integrationTime);
+    return writeRegister(TSL2561_REGISTER_TIMING, gain | integrationTime);
+}
+
+TSL2561_Status TSL2561::writeRegister(uint8_t reg, uint8_t value)
+{
+    if (I2C_BUS.start() != I2C_OK)                          return TSL2561_BUS_ERROR;
+    if (I2C_BUS.write((Adresse << 1)) != I2C_OK)            return TSL2561_BUS_ERROR; //address + write
+    if (I2C_BUS.write(TSL2561_COMMAND_BIT | reg) != I2C_OK) return TSL2561_BUS_ERROR;
+    if (I2C_BUS.write(value) != I2C_OK)                     return TSL2561_BUS_ERROR;
+    I2C_BUS.stop();
     return TSL2561_OK;
 }
 
-void TSL2561::writeRegister(uint8_t reg, uint8_t value)
-{
-    I2C_BUS.start();
-    I2C_BUS.write((Adresse << 1)); //address + write
-    I2C_BUS.write(TSL2561_COMMAND_BIT | reg);
-    I2C_BUS.write(value);
-    I2C_BUS.stop(); 
-}
-
-uint8_t TSL2561::readRegister8(uint8_t reg)
+TSL2561_Status TSL2561::readRegister8(uint8_t reg, uint8_t &out)
 {
     //Sender anmodning om data først (write)
-    I2C_BUS.start();
-    I2C_BUS.write((Adresse << 1)); //adresse + write
-    I2C_BUS.write(TSL2561_COMMAND_BIT | reg);
+    if (I2C_BUS.start() != I2C_OK)                          return TSL2561_BUS_ERROR;
+    if (I2C_BUS.write((Adresse << 1)) != I2C_OK)            return TSL2561_BUS_ERROR; //adresse + write
+    if (I2C_BUS.write(TSL2561_COMMAND_BIT | reg) != I2C_OK) return TSL2561_BUS_ERROR;
     //Read request (repeated start er ok for tsl2561)
-    I2C_BUS.start();
-    I2C_BUS.write(Adresse << 1 | 1); //addresse + read
-    uint8_t received_byte = I2C_BUS.read(1); //læser data ind i byte, og NACK'er (stop)
+    if (I2C_BUS.start() != I2C_OK) { I2C_BUS.stop(); return TSL2561_BUS_ERROR; }
+    if (I2C_BUS.write(Adresse << 1 | 1) != I2C_OK) return TSL2561_BUS_ERROR; //addresse + read
+    out = I2C_BUS.read(1); //læser data ind i byte, og NACK'er (stop)
     I2C_BUS.stop();
-    return received_byte;
+    return TSL2561_OK;
 }
 
-uint16_t  TSL2561::readRegister16(uint8_t reg)
+TSL2561_Status TSL2561::readRegister16(uint8_t reg, uint16_t &out)
 {
     //Sender anmodning om data først (write)
-    I2C_BUS.start();
-    I2C_BUS.write((Adresse << 1)); //adresse + write
+    if (I2C_BUS.start() != I2C_OK)            return TSL2561_BUS_ERROR;
+    if (I2C_BUS.write((Adresse << 1)) != I2C_OK) return TSL2561_BUS_ERROR; //adresse + write
     // WORD_BIT = auto-increment, læser low+high i ét hug
-    I2C_BUS.write(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | reg);
+    if (I2C_BUS.write(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | reg) != I2C_OK) return TSL2561_BUS_ERROR;
     //Read request (repeated start er ok for tsl2561)
-    I2C_BUS.start();
-    I2C_BUS.write(Adresse << 1 | 1); //addresse + read
+    if (I2C_BUS.start() != I2C_OK) { I2C_BUS.stop(); return TSL2561_BUS_ERROR; }
+    if (I2C_BUS.write(Adresse << 1 | 1) != I2C_OK) return TSL2561_BUS_ERROR; //addresse + read
     uint8_t received_lsb = I2C_BUS.read(0); //LSB = første read, ACK
     uint8_t received_msb = I2C_BUS.read(1); //MSB = andet read, NACK (stop)
     I2C_BUS.stop();
 
     //shifter MSB 8 op, og masker med LSB
-    uint16_t received_data = (((uint16_t)received_msb << 8) | received_lsb);
-    return received_data;
+    out = (((uint16_t)received_msb << 8) | received_lsb);
+    return TSL2561_OK;
 }
 
-void TSL2561::enable()
+TSL2561_Status TSL2561::enable()
 {
-    writeRegister(TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWERON);
+    return writeRegister(TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWERON);
 }
 
-void TSL2561::disable()
+TSL2561_Status TSL2561::disable()
 {
-    writeRegister(TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWEROFF);
+    return writeRegister(TSL2561_REGISTER_CONTROL, TSL2561_CONTROL_POWEROFF);
 }
 
 uint32_t TSL2561::calculateLux(uint16_t bb, uint16_t ir_val)

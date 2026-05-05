@@ -9,27 +9,30 @@
 #define LM75_REG_TOS    0x03   // Over-temp shutdown threshold (16-bit)
 
 /**
- * @brief Status koder returneret af LM75 metoder.
+ * @enum LM75_Status
+ * @brief Returværdi for LM75 metoder.
  */
 enum LM75_Status {
-    LM75_OK,
-    LM75_BUS_ERROR
+    LM75_OK,        ///< Måling læst korrekt
+    LM75_BUS_ERROR  ///< I2C kommunikationsfejl
 };
 
 /**
+ * @class LM75
  * @brief Driver for LM75 I2C temperatur sensor.
  *
  * LM75 har op til 8 mulige adresser (0x48-0x4F), styret af A0/A1/A2 pins.
- * Default base-adresse er 0x48 (alle adresse-pins til GND).
+ * Denne instans er konfigureret med default-adresse 0x4D (A0=A2=VCC, A1=GND).
  *
  * Forventer at I2C-bussen er initialiseret (init_I2C) FØR readData() kaldes.
  */
 class LM75 {
 public:
     /**
+     * @brief Opretter en LM75 instans.
      * @param i2c     Reference til I2C bus objektet.
-     * @param address 7-bit I2C adresse. Default 0x48 (A0=A1=A2=GND).
-     *                Kan være 0x48-0x4F afhængigt af adresse-pins.
+     * @param address 7-bit I2C adresse. Default 0x4D (A0=A2=VCC, A1=GND).
+     *                Mulige adresser: 0x48–0x4F afhængigt af A0/A1/A2 pins.
      */
     LM75(I2C &i2c, uint8_t address = 0x4D);
 
@@ -41,12 +44,16 @@ public:
 
     /**
      * @brief Henter senest læste temperatur som rå 9-bit værdi.
-     *        Hver enhed = 0.5°C. F.eks. 50 = 25.0°C.
+     *
+     * Hver enhed svarer til 0.5°C. F.eks. returnerer 50 en temperatur på 25.0°C.
+     *
+     * @return Signeret rå temperaturværdi i 0.5°C-enheder.
      */
     int16_t getTempRaw() const { return tempRaw; }
 
     /**
      * @brief Henter senest læste temperatur i grader Celsius.
+     * @return Temperatur i °C som 32-bit float.
      */
     float getTempC() const { return tempRaw * 0.5f; }
 

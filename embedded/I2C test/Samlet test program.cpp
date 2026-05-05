@@ -3,7 +3,7 @@
 #include "i2c.h"
 #include "TSL2561.h"
 #include "LM75.h"
-#include "sensors.h"   // SCD30
+#include "SCD30.h"   // SCD30
 
 I2C i2c;
 TSL2561 tsl(i2c);          // 0x39

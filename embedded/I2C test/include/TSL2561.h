@@ -71,22 +71,8 @@ enum {
 
 
 /**
- * @brief Driver for the TSL2561 ambient light sensor.
- *
- * Oversigt over registre (Fra TSL2561 datablad):
- * - 0x00 Control register (power on/off)
- * - 0x01 Timing register (integration time + gain)
- * - 0x0A ID register (chip identification, returnerer 0x50 for T-package)
- * - 0x0C/0x0D Channel 0 (broadband, synligt + IR lys)
- * - 0x0E/0x0F Channel 1 (IR-only)
- *
- * Alle register-adgange skal OR'es med command-bit (0x80).
- * Word-reads (16-bit) skal også OR'es med word-bit (0x20).
- */
-
-
-/**
- * @brief Status koder returneret af TSL2561 metoder.
+ * @enum TSL2561_Status
+ * @brief Returværdi for TSL2561 metoder.
  */
 enum TSL2561_Status {
   TSL2561_OK,            ///< Operation lykkedes
@@ -96,6 +82,7 @@ enum TSL2561_Status {
 
 
 /**
+ * @enum TSL2561_Gain
  * @brief Gain (forstærknings) indstillinger for TSL2561.
  *
  * Højere gain (16x) giver bedre følsomhed i svagt lys, men risikerer
@@ -108,6 +95,7 @@ enum TSL2561_Gain {
 
 
 /**
+ * @enum TSL2561_IntegrationTime
  * @brief Integrationstid for TSL2561.
  *
  * Længere integrationstid giver mere præcise målinger, men tager længere tid
@@ -121,7 +109,8 @@ enum TSL2561_IntegrationTime {
 
 
 /**
- * @brief Klasse til at læse data fra TSL2561 lys-sensoren via I2C.
+ * @class TSL2561
+ * @brief Driver til TSL2561 ambient light sensor via I2C.
  *
  * Sensoren har to ADC-kanaler:
  *  - Channel 0 (broadband): synligt lys + infrarødt
@@ -129,6 +118,16 @@ enum TSL2561_IntegrationTime {
  *
  * Lux beregnes ud fra forholdet mellem de to kanaler vha. en stykkevis
  * lineær approksimation (Se TSL2561 datablad).
+ *
+ * Oversigt over relevante registre (Fra TSL2561 datablad):
+ * - 0x00 Control register (power on/off)
+ * - 0x01 Timing register (integrationstid + gain)
+ * - 0x0A ID register (chip-identifikation, bits 7:4 = 0x5 for TSL2561)
+ * - 0x0C/0x0D Channel 0 (broadband, synligt + IR lys)
+ * - 0x0E/0x0F Channel 1 (IR-only)
+ *
+ * Alle register-adgange skal OR'es med command-bit (0x80).
+ * Word-reads (16-bit) skal også OR'es med word-bit (0x20).
  */
 class TSL2561 {
 public:
@@ -136,8 +135,8 @@ public:
    * @brief Konstruerer en TSL2561 instans.
    *
    * @param i2c     Reference til I2C bus objektet.
-   * @param address 7-bit I2C adresse for sensoren. Default 0x39 (ADDR pin floating).
-   *                Brug 0x29 hvis ADDR er pulled low, 0x49 hvis pulled high.
+   * @param address 7-bit I2C adresse for sensoren. Default 0x29 (ADDR pin pulled low).
+   *                Brug 0x39 hvis ADDR er floating, 0x49 hvis pulled high.
    */
   TSL2561(I2C &i2c, uint8_t address = 0x29);
 
@@ -172,8 +171,8 @@ public:
   /**
    * @brief Henter den senest beregnede lux-værdi.
    *
-   * @return Lys-intensitet i lux. Returnerer 0 hvis sensoren er mættet
-   *         eller readData() endnu ikke er kaldt.
+   * @return Lys-intensitet i lux. Returnerer 65536 hvis sensoren er mættet.
+   *         Returnerer 0 hvis readData() endnu ikke er kaldt.
    */
   uint32_t getLux();
 
@@ -213,8 +212,9 @@ private:
    *
    * @param reg   Register adresse (uden command-bit).
    * @param value 8-bit værdi der skal skrives.
+   * @return TSL2561_OK ved succes, TSL2561_BUS_ERROR ved I2C-fejl.
    */
-  void writeRegister(uint8_t reg, uint8_t value);
+  TSL2561_Status writeRegister(uint8_t reg, uint8_t value);
 
 
   /**
@@ -223,9 +223,10 @@ private:
    * Command-bit (0x80) tilføjes automatisk til register-adressen.
    *
    * @param reg Register adresse (uden command-bit).
-   * @return    Læst 8-bit værdi.
+   * @param out Læst 8-bit værdi udfyldes ved succes.
+   * @return    TSL2561_OK ved succes, TSL2561_BUS_ERROR ved I2C-fejl.
    */
-  uint8_t readRegister8(uint8_t reg);
+  TSL2561_Status readRegister8(uint8_t reg, uint8_t &out);
 
 
   /**
@@ -235,21 +236,24 @@ private:
    * fortælle sensoren at vi vil læse 2 bytes ad gangen.
    *
    * @param reg Register adresse (uden command/word-bits).
-   * @return    Læst 16-bit værdi.
+   * @param out Læst 16-bit værdi udfyldes ved succes.
+   * @return    TSL2561_OK ved succes, TSL2561_BUS_ERROR ved I2C-fejl.
    */
-  uint16_t readRegister16(uint8_t reg);
+  TSL2561_Status readRegister16(uint8_t reg, uint16_t &out);
 
 
   /**
    * @brief Tænder sensoren (skriver 0x03 til control-registret).
+   * @return TSL2561_OK ved succes, TSL2561_BUS_ERROR ved I2C-fejl.
    */
-  void enable();
+  TSL2561_Status enable();
 
 
   /**
    * @brief Slukker sensoren for at spare strøm (skriver 0x00 til control-registret).
+   * @return TSL2561_OK ved succes, TSL2561_BUS_ERROR ved I2C-fejl.
    */
-  void disable();
+  TSL2561_Status disable();
 
 
   /**

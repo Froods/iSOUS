@@ -63,7 +63,10 @@ I2C_Status I2C::start() {
 I2C_Status I2C::write(uint8_t data) {
   TWDR = data; //Data som bliver sendt
   TWCR = (1 << TWINT) | (1 << TWEN); //starter transmissionen
-  while (!(TWCR & (1 << TWINT))); //Venter indtil byte er sendt 
+  uint32_t timeout = 0;
+  while (!(TWCR & (1 << TWINT))) { //Venter indtil byte er sendt
+    if (++timeout > 50000) return I2C_TIMEOUT;
+  }
 
   uint8_t status = TWSR & 0xF8; //læser status register
 

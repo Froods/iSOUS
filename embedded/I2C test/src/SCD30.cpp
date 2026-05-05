@@ -1,4 +1,4 @@
-#include "sensors.h"
+#include "SCD30.h"
 #include <Arduino.h>
 #include <util/delay.h>
 
@@ -46,25 +46,22 @@ static uint8_t generateCRCGeneric(const uint8_t* data, size_t count, uint8_t ini
 }
 
 void SCD30::begin() {
-    I2C_Status status;
-    
     // Step 1: Force a Stop and wait for the sensor to breathe
     I2C_BUS.stop();
     _delay_ms(100);
 
     // Step 2: The Start Measurement Sequence
     // Command: 0x0010, Args: 0x0000, CRC: 0x81
-    I2C_BUS.start();
-    if (I2C_BUS.write(Adresse << 1) == I2C_OK) {
-        _delay_us(50); // Small "Thinking" delay for the sensor
-        I2C_BUS.write(0x00);
-        I2C_BUS.write(0x10);
-        I2C_BUS.write(0x00);
-        I2C_BUS.write(0x00);
-        I2C_BUS.write(0x81);
-    }
+    if (I2C_BUS.start() != I2C_OK)             { I2C_BUS.stop(); return; }
+    if (I2C_BUS.write(Adresse << 1) != I2C_OK) return;
+    _delay_us(50); // Small "Thinking" delay for the sensor
+    if (I2C_BUS.write(0x00) != I2C_OK) return;
+    if (I2C_BUS.write(0x10) != I2C_OK) return;
+    if (I2C_BUS.write(0x00) != I2C_OK) return;
+    if (I2C_BUS.write(0x00) != I2C_OK) return;
+    if (I2C_BUS.write(0x81) != I2C_OK) return;
     I2C_BUS.stop();
-    
+
     Serial.println("SCD30: Measurement Command Sent.");
 }
 
@@ -85,17 +82,17 @@ SCD30_Status SCD30::readData()
 
   while (received_lsb != 1) 
   {
-    I2C_BUS.start(); //start bit
-    I2C_BUS.write(Adresse << 1); //I2C Addresse, samt shift op (write cmd)
-    I2C_BUS.write(0x02); //cmd 0x0202 MSB
-    I2C_BUS.write(0x02); //cmd 0x0202 LSB
+    if (I2C_BUS.start() != I2C_OK)              return SCD30_BUS_ERROR; //start bit
+    if (I2C_BUS.write(Adresse << 1) != I2C_OK)  return SCD30_BUS_ERROR; //I2C Addresse, samt shift op (write cmd)
+    if (I2C_BUS.write(0x02) != I2C_OK)          return SCD30_BUS_ERROR; //cmd 0x0202 MSB
+    if (I2C_BUS.write(0x02) != I2C_OK)          return SCD30_BUS_ERROR; //cmd 0x0202 LSB
     I2C_BUS.stop();
 
     _delay_ms(10); //anbefalet delay efter kommunikation (fra datasheet)
 
     //Anden besked (ingen kommando). Read istedet for write
-    I2C_BUS.start(); //start bit
-    I2C_BUS.write((Adresse << 1) | 1); //I2C addresse. Bemærk: Masker med 1. Bit 0 = 1 (read)
+    if (I2C_BUS.start() != I2C_OK)                   return SCD30_BUS_ERROR; //start bit
+    if (I2C_BUS.write((Adresse << 1) | 1) != I2C_OK) return SCD30_BUS_ERROR; //I2C addresse. Bemærk: Masker med 1. Bit 0 = 1 (read)
     uint8_t received_msb = I2C_BUS.read(0); // ACK
     received_lsb = I2C_BUS.read(0); // ACK (Bemærk, hvis data er klar (lsb = 1) exitter while loop i bunden)
     uint8_t crc = I2C_BUS.read(1); //NACK (sidste byte)
@@ -124,17 +121,17 @@ SCD30_Status SCD30::readData()
     
   //Læs måledata fra sensor
   //0x0300 - anmod om data
-  I2C_BUS.start(); //start bit
-  I2C_BUS.write(Adresse << 1); //I2C Addresse, samt shift op (write cmd)
-  I2C_BUS.write(0x03); //cmd 0x0300 MSB
-  I2C_BUS.write(0x00); //cmd 0x0300 LSB
+  if (I2C_BUS.start() != I2C_OK)             return SCD30_BUS_ERROR; //start bit
+  if (I2C_BUS.write(Adresse << 1) != I2C_OK) return SCD30_BUS_ERROR; //I2C Addresse, samt shift op (write cmd)
+  if (I2C_BUS.write(0x03) != I2C_OK)         return SCD30_BUS_ERROR; //cmd 0x0300 MSB
+  if (I2C_BUS.write(0x00) != I2C_OK)         return SCD30_BUS_ERROR; //cmd 0x0300 LSB
   I2C_BUS.stop();
 
   _delay_ms(10);
 
   //Læs data
-  I2C_BUS.start(); //start bit
-  I2C_BUS.write((Adresse << 1) | 1); //I2C addresse (read) 
+  if (I2C_BUS.start() != I2C_OK)                   return SCD30_BUS_ERROR; //start bit
+  if (I2C_BUS.write((Adresse << 1) | 1) != I2C_OK) return SCD30_BUS_ERROR; //I2C addresse (read)
   
   uint8_t co2_MSB1 = I2C_BUS.read(0);
   uint8_t co2_LSB1 = I2C_BUS.read(0);
