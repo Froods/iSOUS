@@ -8,3 +8,9 @@ __pycache__/
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# Ignorer alle filer der ender på .pyc
+*.pyc
+
+# Ignorer hele __pycache__ mappen (som ses i din GUI mappe)
+__pycache__/
