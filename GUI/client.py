@@ -56,12 +56,13 @@ PARAMETER_OMITTED = 0x00
 EXPECTED_BYTES = 4
 
 class Client:
-    def __init__(self, port, baudrate, timeout):
+    def __init__(self, port, baudrate, timeout, debug_uart=False):
         # Initialiser attributter
         self.__port = port
         self.__baudrate = baudrate
         self.__timeout = timeout
         self.__manual = False
+        self.__debug_uart = debug_uart
 
         # Initialiser Serial object fra pyserial
         self.ser = serial.Serial(
@@ -80,6 +81,10 @@ class Client:
             print("Error: Ikke forbundet til nogen port")
 
     # --- Public methods ---
+
+    # ÆNDRING: Tilføjet metode så UART-debug kan tændes og slukkes efter behov.
+    def set_debug_uart(self, enabled):
+        self.__debug_uart = enabled
 
     def send_desired_values(self, temp, co2):
         if self.ser.is_open:
@@ -179,5 +184,6 @@ class Client:
         self.ser.write(packet)
         self.ser.flush()
 
-        # Print sendt byte
-        print(f"Byte sendt gennem UART: \n{packet.hex(' ')}")
+        # Print af sendte bytes sker kun når debug er slået til.
+        if self.__debug_uart:
+            print(f"Byte sendt gennem UART: \n{packet.hex(' ')}")

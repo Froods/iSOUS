@@ -109,7 +109,7 @@ class GUI:
             print("Fejl: Ugyldigt valg. Temperaturen skal være mellem 0 og 40")
             return
 
-        # Bruger den fælles CO2-mapping, så værdierne kun skal ændres ét sted.
+        # Bruger den fælles CO2-mapping, så værdierne kun skal ændres et sted.
         co2_value = self.co2_values.get(co2_level)
         if co2_value is None:
             print("Fejl: Ugyldigt CO2-niveau")

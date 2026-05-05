@@ -110,10 +110,11 @@ class SettingsPage(Page):
         tk.Label(change_panel, text="Ønsket temperatur (C):", anchor="w").pack(fill="x", padx=8, pady=(8, 2))
         tk.Entry(change_panel, textvariable=self.wanted_temp).pack(fill="x", padx=8, pady=(0, 8))
 
-        # CO2 niveau med 3 bullets
-        self.wanted_co2 = tk.StringVar(value="Mellem")
+        # CO2 niveau med 4 bullets
+        self.wanted_co2 = tk.StringVar(value="Lav")
         tk.Label(change_panel, text="CO2 niveau:", anchor="w").pack(fill="x", padx=8, pady=(2, 2))
 
+        tk.Radiobutton(change_panel, text="Ureguleret", variable=self.wanted_co2, value="Ureguleret").pack(anchor="w", padx=12)
         tk.Radiobutton(change_panel, text="Lav", variable=self.wanted_co2, value="Lav").pack(anchor="w", padx=12)
         tk.Radiobutton(change_panel, text="Mellem", variable=self.wanted_co2, value="Mellem").pack(anchor="w", padx=12)
         tk.Radiobutton(change_panel, text="Høj", variable=self.wanted_co2, value="Høj").pack(anchor="w", padx=12)
