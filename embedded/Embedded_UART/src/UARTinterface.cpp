@@ -1,12 +1,11 @@
 #include "UARTinterface.h"
 #include <Arduino.h>
-#include <stdint.h>
 
 void UARTinterface::init(uint32_t baudrate) {
 	Serial.begin(baudrate);
 }
 
-UARTinterface::UARTinterface(uint32_t baudrate) {
+UARTinterface::UARTinterface(uint32_t baudrate, UserSettings& settings) : settings_(settings) {
 	init(baudrate);
 }
 
@@ -79,21 +78,76 @@ void UARTinterface::parseCommand() {
 			Serial.print(par1);
 			Serial.print("co2: ");
 			Serial.print(par2);
+
+			settings_.setTargetTemp(static_cast<int>(par1));
+			settings_.setCO2Setting(static_cast<int>(par2));
+
 			break;
 		case CMD_GET_ROOM_TEMP:
 			Serial.print("Get room temp");
+
+			char roomTemp = static_cast<char>(settings_.getRoomTemp());
+			char toSend[6] = {ROOM_TEMP_ID, roomTemp, PARAMETER_OMITTED, PARAMETER_OMITTED, PARAMETER_OMITTED, STOPBYTE};
+			sendResponse(toSend);
+
 			break;
 		case CMD_GET_ROOM_CO2:
 			Serial.print("Get room co2");
+
+			char co2 = static_cast<char>(settings_.getActualCO2());
+			char toSend[6] = {ROOM_CO2_ID, co2, PARAMETER_OMITTED, PARAMETER_OMITTED, PARAMETER_OMITTED, STOPBYTE};
+			sendResponse(toSend);
+
 			break;
 		case CMD_GET_OUTSIDE_TEMP:
 			Serial.print("Get outside temp");
+
+			char outTemp = static_cast<char>(settings_.getOutTemp());
+			char toSend[6] = {OUTSIDE_TEMP_ID, outTemp, PARAMETER_OMITTED, PARAMETER_OMITTED, PARAMETER_OMITTED, STOPBYTE};
+			sendResponse(toSend);
+
 			break;
 		case CMD_GET_LIGHT:
 			Serial.print("Get light");
+
+			uint32_t lightInt = settings_.getLight();
+			
+			char lightArr[4];
+			lightArr[0] = (lightInt >> 24) & 0xFF; 
+			lightArr[1] = (lightInt >> 16) & 0xFF;
+			lightArr[2] = (lightInt >> 8)  & 0xFF;
+			lightArr[3] =  lightInt        & 0xFF;
+
+			char toSend[6] = {LIGHT_ID, lightArr[0], lightArr[1], lightArr[2], lightArr[3], STOPBYTE};
+			sendResponse(toSend);
+
+			break;
+		case CMD_SET_WINDOW_STATE:
+			Serial.print("Set window state");
+				if (par1 == 0x01) {
+					settings_.setWindowTargetState(true);
+				} else {
+					settings_.setWindowTargetState(false);
+				}
+			break;
+		case CMD_SET_CURTAIN_STATE:
+			Serial.print("Set Curtain state");
+				if (par1 == 0x01) {
+					settings_.setCurtainTargetState(true);
+				} else {
+					settings_.setCurtainTargetState(false);
+				}
+			break;
+		case TOGGLE_MANUAL:
+			Serial.print("Toggle manual");
+				if (par1 == 0x01) {
+					settings_.enableManual();
+				} else {
+					settings_.disableManual();
+				}
 			break;
 		default:
-			Serial.print("Invalied command: ");
+			Serial.print("Invalid command: ");
 			Serial.print(cmd);
 			return;
 	}
