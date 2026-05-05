@@ -79,7 +79,7 @@ void UserSettings::setCO2Setting(int co2) {
 	} else if (co2 < 1000) {
 		CO2Setting_ = CO2Setting::Normalt_indeklima;
 	} else {
-		CO2Setting_ = CO2Setting::Høj;
+		CO2Setting_ = CO2Setting::Hoej;
 	}
 }
 
@@ -112,7 +112,7 @@ void UserSettings::setActualCO2(int co2) {
 		} else if (co2 < 1000) {
 			actualCO2_ = CO2Setting::Normalt_indeklima;
 		} else {
-			actualCO2_ = CO2Setting::Høj;
+			actualCO2_ = CO2Setting::Hoej;
 		}
 	}
 }

@@ -11,8 +11,8 @@
  */
 enum class CO2Setting {
     Ureguleret,
-    Høj,
-    Normalt_indeklima,
+	Hoej,
+	Normalt_indeklima,
     Minimum_CO2,
 };
 

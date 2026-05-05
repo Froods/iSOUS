@@ -72,7 +72,7 @@ void UARTinterface::parseCommand() {
 	char par2 = toParse[2];
 
 	switch(cmd) {
-		case CMD_SET_DESIRED_VALUES:
+		case CMD_SET_DESIRED_VALUES: {
 			Serial.print("Set desired values");
 			Serial.print("temp: ");
 			Serial.print(par1);
@@ -83,7 +83,8 @@ void UARTinterface::parseCommand() {
 			settings_.setCO2Setting(static_cast<int>(par2));
 
 			break;
-		case CMD_GET_ROOM_TEMP:
+		}
+		case CMD_GET_ROOM_TEMP: {
 			Serial.print("Get room temp");
 
 			char roomTemp = static_cast<char>(settings_.getRoomTemp());
@@ -91,7 +92,8 @@ void UARTinterface::parseCommand() {
 			sendResponse(toSend);
 
 			break;
-		case CMD_GET_ROOM_CO2:
+		}
+		case CMD_GET_ROOM_CO2: {
 			Serial.print("Get room co2");
 
 			char co2 = static_cast<char>(settings_.getActualCO2());
@@ -99,7 +101,8 @@ void UARTinterface::parseCommand() {
 			sendResponse(toSend);
 
 			break;
-		case CMD_GET_OUTSIDE_TEMP:
+		}
+		case CMD_GET_OUTSIDE_TEMP: {
 			Serial.print("Get outside temp");
 
 			char outTemp = static_cast<char>(settings_.getOutTemp());
@@ -107,22 +110,25 @@ void UARTinterface::parseCommand() {
 			sendResponse(toSend);
 
 			break;
-		case CMD_GET_LIGHT:
+		}
+		case CMD_GET_LIGHT: {
 			Serial.print("Get light");
 
 			uint32_t lightInt = settings_.getLight();
 			
-			char lightArr[4];
-			lightArr[0] = (lightInt >> 24) & 0xFF; 
-			lightArr[1] = (lightInt >> 16) & 0xFF;
-			lightArr[2] = (lightInt >> 8)  & 0xFF;
-			lightArr[3] =  lightInt        & 0xFF;
-
-			char toSend[6] = {LIGHT_ID, lightArr[0], lightArr[1], lightArr[2], lightArr[3], STOPBYTE};
+			char toSend[6] = {
+				LIGHT_ID, 
+				static_cast<char>((lightInt >> 24) & 0xFF),
+				static_cast<char>((lightInt >> 16) & 0xFF),
+				static_cast<char>((lightInt >> 8) & 0xFF),
+				static_cast<char>(lightInt & 0xFF),
+				STOPBYTE
+			};
 			sendResponse(toSend);
 
 			break;
-		case CMD_SET_WINDOW_STATE:
+		}
+		case CMD_SET_WINDOW_STATE: {
 			Serial.print("Set window state");
 				if (par1 == 0x01) {
 					settings_.setWindowTargetState(true);
@@ -130,7 +136,8 @@ void UARTinterface::parseCommand() {
 					settings_.setWindowTargetState(false);
 				}
 			break;
-		case CMD_SET_CURTAIN_STATE:
+		}
+		case CMD_SET_CURTAIN_STATE: {
 			Serial.print("Set Curtain state");
 				if (par1 == 0x01) {
 					settings_.setCurtainTargetState(true);
@@ -138,7 +145,8 @@ void UARTinterface::parseCommand() {
 					settings_.setCurtainTargetState(false);
 				}
 			break;
-		case TOGGLE_MANUAL:
+		}
+		case TOGGLE_MANUAL: {
 			Serial.print("Toggle manual");
 				if (par1 == 0x01) {
 					settings_.enableManual();
@@ -146,10 +154,12 @@ void UARTinterface::parseCommand() {
 					settings_.disableManual();
 				}
 			break;
-		default:
+		}
+		default: {
 			Serial.print("Invalid command: ");
 			Serial.print(cmd);
 			return;
+		}
 	}
 
 }

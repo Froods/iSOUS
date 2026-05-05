@@ -1,37 +1,35 @@
 #ifndef ISOUSCONTROLLER_H
 #define ISOUSCONTROLLER_H
 
-#include "CO2Sensor.h"
-#include "TempSensorInside.h"
-#include "TempSensorOutside.h"
-#include "LightSensor.h"
+#include "SCD30.h"
+#include "lm75.h"
+#include "TSL2561.h"
 #include "UserSettings.h"
-#include "WindowMotor.h"
-#include "CurtainMotor.h"
+#include "window_driver.h"
+#include "curtain_driver.h"
+#include "I2C.h"
 
 class ISOUSController {
 private:
-    CO2Sensor co2;
-    TempSensorInside temp_inside;
-    TempSensorOutside temp_outside;
-    LightSensor light;
+    SCD30 SCD30_;
+    LM75 LM75_;
+    TSL2561 TSL2561_;
     UserSettings& settings;   // shared ifølge UML
     WindowMotor window;
     CurtainMotor curtain;
 
+	int n = 11;
+
     void evaluateWindow();
     void evaluateCurtain();
+    void syncSensorData();
 
 public:
-    ISOUSController(CO2Sensor c,
-                    TempSensorInside ti,
-                    TempSensorOutside to,
-                    LightSensor l,
-                    UserSettings& s,
-                    WindowMotor w,
-                    CurtainMotor cu);
+    ISOUSController(I2C &i2c, UserSettings &s);
 
     void update();
 };
+
+
 
 #endif

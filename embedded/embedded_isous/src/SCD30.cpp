@@ -13,6 +13,8 @@
 */
 
 
+
+
 /**
 * @brief Beregner CRC-8 checksum for SCD30
 *
@@ -44,6 +46,7 @@ static uint8_t generateCRCGeneric(const uint8_t* data, size_t count, uint8_t ini
     }
     return crc;
 }
+
 
 void SCD30::begin() {
     // Step 1: Force a Stop and wait for the sensor to breathe

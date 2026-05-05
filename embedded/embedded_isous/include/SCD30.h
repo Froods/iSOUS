@@ -1,5 +1,5 @@
 #pragma once
-#include "i2c.h"
+#include "I2C.h"
 #include <stdint.h>
 
 /**
