@@ -8,13 +8,14 @@
 #include "window_driver.h"
 #include "curtain_driver.h"
 #include "I2C.h"
+#include "CO2Setting.h"
 
 class ISOUSController {
 private:
     SCD30 SCD30_;
     LM75 LM75_;
     TSL2561 TSL2561_;
-    UserSettings& settings;   // shared ifølge UML
+    UserSettings& settings_;   // shared ifølge UML
     WindowMotor window;
     CurtainMotor curtain;
 
