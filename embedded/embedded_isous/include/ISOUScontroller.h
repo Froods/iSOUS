@@ -16,8 +16,8 @@ private:
     LM75 LM75_;
     TSL2561 TSL2561_;
     UserSettings& settings_;   // shared ifølge UML
-    WindowMotor window;
-    CurtainMotor curtain;
+    WindowMotor window_;
+    CurtainMotor curtain_;
 
 	int n = 11;
 

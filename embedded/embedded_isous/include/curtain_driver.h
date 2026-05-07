@@ -52,6 +52,8 @@ public:
      */
     void delayForCutain();
 
+	bool getIsOut();
+
 };
 
 

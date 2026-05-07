@@ -100,3 +100,7 @@ void WindowMotor::test_Of_Motor() {
   
   _delay_ms(1000);
 }
+
+bool WindowMotor::getIsOpen() {
+	return isOpen;
+}
