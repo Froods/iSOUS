@@ -1,18 +1,26 @@
 #include <Arduino.h>
+#include "curtain_driver.h"
+#include "window_driver.h"
 
-// put function declarations here:
-int myFunction(int, int);
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
-}
+int main(){
+  init();
+  Serial.begin(9600);
+  WindowMotor window;
+  CurtainMotor curtain;
 
-void loop() {
-  // put your main code here, to run repeatedly:
-}
+  Serial.println("Initialization done");
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  while (1){
+    window.test_Of_Motor();
+    _delay_ms(500);
+    curtain.test_of_curtain();
+    _delay_ms(500);
+
+    Serial.println("loop done");
+  }
+
+
+
+
 }
