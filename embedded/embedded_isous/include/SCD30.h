@@ -65,8 +65,8 @@ public:
   float getTemperature();
 
 private:
-  float CO2 = 0.0f;
-  float temperature = 0.0f;
+  float CO2;
+  float temperature;
   I2C &I2C_BUS;
   uint8_t Adresse = 0x61;
 };

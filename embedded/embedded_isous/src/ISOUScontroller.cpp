@@ -12,10 +12,13 @@ ISOUSController::ISOUSController(I2C &i2c, UserSettings &s)
 
 void ISOUSController::init() {
     SCD30_.begin();
-    TSL2561_.begin();
+    _delay_ms(2500);                          // let SCD30 produce first sample
+    TSL2561_Status ts = TSL2561_.begin();
+    if (ts != TSL2561_OK) {
+        Serial.print(F("TSL2561 begin FAIL, status="));
+        Serial.println(ts);
+    }
 }
-
-
 void ISOUSController::update() {
     syncSensorData();
     if (settings_.isManual()) {
@@ -30,22 +33,27 @@ void ISOUSController::update() {
     }
 }
 
+void ISOUSController::syncSensorData() {
+    // Same order as the working bring-up: TSL → LM → SCD
+    if (TSL2561_.readData() == TSL2561_OK) {
+        settings_.setLight(TSL2561_.getLux());
+    } else {
+        Serial.println(F("TSL2561 data !ok"));
+    }
 
-void ISOUSController::syncSensorData(){ 
-    //Lav en ny måling for hver sensor
+    if (LM75_.readData() == LM75_OK) {
+        settings_.setOutTemp(LM75_.getTempC());
+    } else {
+        Serial.println(F("LM75 data !ok"));
+    }
+
     if (SCD30_.readData() == SCD30_OK) {
         settings_.setRoomTemp(SCD30_.getTemperature());
         settings_.setActualCO2(SCD30_.getCO2());
+    } else {
+        Serial.println(F("SCD30 data !ok"));
     }
-    if(LM75_.readData() == LM75_OK){
-        settings_.setOutTemp(LM75_.getTempC());
-    }
-    if(TSL2561_.readData() == TSL2561_OK){
-        settings_.setLight(TSL2561_.getLux());
-    }
-
 }
-
 
 void ISOUSController::evaluateWindow() {
     int actualInTemp  = static_cast<int>(SCD30_.getTemperature());
