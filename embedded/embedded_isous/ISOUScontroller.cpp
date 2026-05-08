@@ -5,8 +5,8 @@ ISOUSController::ISOUSController(I2C &i2c, UserSettings &s)
       LM75_(i2c),
       TSL2561_(i2c),
       settings_(s),
-      window(),
-      curtain()
+      window_(),
+      curtain_()
 {}
 
 
@@ -38,10 +38,10 @@ void ISOUSController::evaluateWindow() {
     int  co2Threshold = 0;
     bool co2Regulated = true;
     switch (targetCO2) {
-        case Minimum_CO2:        co2Threshold = 750;  break;  // < 750 ppm
-        case Normalt_indeklima:  co2Threshold = 1000; break;  // < 1000 ppm
-        case Hoj:                co2Threshold = 1500; break;  // < 1500 ppm
-        case Ureguleret:         co2Regulated = false; break; // vinduesstyring fra
+        case CO2Setting::Minimum_CO2:        co2Threshold = 750;  break;  // < 750 ppm
+        case CO2Setting::Normalt_indeklima:  co2Threshold = 1000; break;  // < 1000 ppm
+        case CO2Setting::Hoej:                co2Threshold = 1500; break;  // < 1500 ppm
+        case CO2Setting::Ureguleret:         co2Regulated = false; break; // vinduesstyring fra
     }
 
     // ---- 2) Build decision flags (med ±1 °C hysterese, krav 1.8) ----
@@ -56,22 +56,22 @@ void ISOUSController::evaluateWindow() {
     // ---- 3) Beslut vinduestilstand ----
     // CO2 har højeste prioritet: skal udluftes uanset temperatur
     if (co2TooHigh) {
-        if (!window_.isOpen()) window_.open();
+        if (!window_.getIsOpen()) window_.openWindow();
         return;
     }
 
     if (tooHot && canCoolByVenting) {
-        if (!window_.isOpen()) window_.open();
+        if (!window_.getIsOpen()) window_.openWindow();
     }
     else if (tooCold && canHeatByVenting) {
-        if (!window_.isOpen()) window_.open();
+        if (!window_.getIsOpen()) window_.openWindow();
     }
     else if (inBand) {
         // Inden for hysterese-bånd – lad vinduet stå som det står
     }
     else {
         // Ude favoriserer ikke åbning (fx for koldt ude, for varmt inde)
-        if (window_.isOpen()) window_.close();
+        if (window_.getIsOpen()) window_.closeWindow();
     }
 }
 
@@ -96,15 +96,15 @@ void ISOUSController::evaluateCurtain() {
 
     if (tooHot && sunShining) {
         // Bloker sol for at køle ned
-        if (!curtain_.isOut()) curtain_.rollOut();
+        if (!curtain_.getIsOut()) curtain_.rollOutCurtain();
     }
     else if (tooCold && sunShining) {
         // Luk solens varme ind
-        if (curtain_.isOut()) curtain_.rollIn();
+        if (curtain_.getIsOut()) curtain_.rollInCurtain();
     }
     else if (tooCold && !sunShining) {
         // Isoler – scenarie 6 i datavariationslisten
-        if (!curtain_.isOut()) curtain_.rollOut();
+        if (!curtain_.getIsOut()) curtain_.rollOutCurtain();
     }
     else if (inBand) {
         // Hysterese: lad gardinet stå

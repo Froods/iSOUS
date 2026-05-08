@@ -79,4 +79,6 @@ public:
      */
     void test_Of_Motor();
 
+	bool getIsOpen();
+
 };
