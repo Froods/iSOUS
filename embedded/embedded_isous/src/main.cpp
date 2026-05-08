@@ -19,8 +19,4 @@ int main(){
 
     Serial.println("loop done");
   }
-
-
-
-
 }
