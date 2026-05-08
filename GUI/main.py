@@ -22,6 +22,7 @@ class GUI:
         self.curtain_open = False
         # CO2-valg
         self.co2_values = {
+            "Ureguleret": 50,
             "Lav": 200,
             "Mellem": 400,
             "Høj": 600,
@@ -44,6 +45,10 @@ class GUI:
 
     # Fælles metode til at skifte mellem manuel og automatisk styring.
     def set_manual_mode(self, is_manual):
+        if self.manual != is_manual and self.client is not None:
+            # Sender 1 når automatisk styring er tændt og 0 når den er slukket.
+            self.client.toggle_auto_mode(not is_manual)
+
         self.manual = is_manual
         self.home_page.refresh_control_mode()
 
@@ -135,6 +140,10 @@ class GUI:
         self.home_page.show()
 
     def show_settings(self):
+        self.settings_page.vindue_op.config(state=tk.DISABLED if self.window_open else tk.NORMAL)
+        self.settings_page.vindue_ned.config(state=tk.NORMAL if self.window_open else tk.DISABLED)
+        self.settings_page.gardin_op.config(state=tk.DISABLED if self.curtain_open else tk.NORMAL)
+        self.settings_page.gardin_ned.config(state=tk.NORMAL if self.curtain_open else tk.DISABLED)
         self.settings_page.show()
 
     # GUI'en parser rå sensor-bytes, så client.py kan blive i sin oprindelige form.

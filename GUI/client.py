@@ -164,6 +164,14 @@ class Client:
         else:
             print("Error: Ikke forbundet til nogen port")
 
+    def toggle_auto_mode(self, is_auto):
+        if self.ser.is_open:
+            par1 = 1 if is_auto else 0
+            self.__send_command_UART(cmd=CMD_TOGGLE_AUTO_MODE, par1=par1, par2=PARAMETER_OMITTED)
+        else:
+            print("Error: Ikke forbundet til nogen port")
+
+
     # --- Private methods ---
 
     def __pack_values(self, cmd, par1, par2):

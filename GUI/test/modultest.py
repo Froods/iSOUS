@@ -18,6 +18,7 @@ class VirtualUARTState:
         self.room_co2 = 450
         self.outside_temp = 11
         self.light = 325
+        self.auto_enabled = 1
         self.window_open = 0
         self.curtain_open = 0
         self.desired_temp = None
@@ -30,6 +31,7 @@ class VirtualUARTState:
             "room_co2": self.room_co2,
             "outside_temp": self.outside_temp,
             "light": self.light,
+            "auto_enabled": self.auto_enabled,
             "window_open": self.window_open,
             "curtain_open": self.curtain_open,
             "desired_temp": self.desired_temp,
@@ -45,6 +47,7 @@ class FakeSerial:
     CMD_GET_LIGHT = 0x05
     CMD_SET_WINDOW_STATE = 0x06
     CMD_SET_CURTAIN_STATE = 0x07
+    CMD_TOGGLE_AUTO_MODE = 0x08
     STOPBYTE = 0xFF
 
     def __init__(self, port, baudrate, timeout):
@@ -87,6 +90,10 @@ class FakeSerial:
         elif cmd == self.CMD_SET_CURTAIN_STATE:
             self._state.curtain_open = par1
             print(f"[EMULATOR] Gardin sat til: {'åbent' if par1 else 'lukket'}")
+            self._next_response = b""
+        elif cmd == self.CMD_TOGGLE_AUTO_MODE:
+            self._state.auto_enabled = par1
+            print(f"[EMULATOR] Automatisk styring sat til: {'tændt' if par1 else 'slukket'}")
             self._next_response = b""
         else:
             raise ValueError(f"Ukendt virtuel kommando: {cmd}")
@@ -153,6 +160,7 @@ def print_help():
         "  show                    Vis nuværende emulator-state\n"
         "  buttons                 Vis state for vindue/gardin-knapper i settings\n"
         "  uart on|off             Tænd/sluk UART debug i emulatoren\n"
+        "  auto on|off             Sæt automatisk styring direkte i emulatoren\n"
         "  temp <0-65535>          Sæt rumtemperatur\n"
         "  co2 <0-65535>           Sæt rum-CO2\n"
         "  outside <0-65535>       Sæt udetemperatur\n"
@@ -226,6 +234,21 @@ def handle_command(app, command_line):
             print("UART debug er nu slukket")
         else:
             print("Brug: uart on|off")
+        return True
+
+    if cmd == "auto" and len(parts) == 2:
+        if parts[1].lower() == "on":
+            VIRTUAL_UART.auto_enabled = 1
+            app.manual = False
+            app.home_page.refresh_control_mode()
+            print("Automatisk styring sat til tændt")
+        elif parts[1].lower() == "off":
+            VIRTUAL_UART.auto_enabled = 0
+            app.manual = True
+            app.home_page.refresh_control_mode()
+            print("Automatisk styring sat til slukket")
+        else:
+            print("Brug: auto on|off")
         return True
 
     if cmd == "temp" and len(parts) == 2:
@@ -379,12 +402,14 @@ def run_emulator():
 
     # Byte-gyldige værdier til Gem-flowet i den nuværende UART-pakke.
     app.co2_values = {
+        "Ureguleret": 50,
         "Lav": 100,
         "Mellem": 200,
         "Høj": 250,
     }
     if app.client is not None and hasattr(app.client, "set_debug_uart"):
         app.client.set_debug_uart(False)
+    app.manual = False
 
     print("=== Virtuel sensor-emulator startet ===")
     print("GUI-vinduet bruger nu virtuel UART i stedet for rigtig hardware.")

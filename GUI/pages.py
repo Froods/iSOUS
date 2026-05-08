@@ -173,6 +173,15 @@ class SettingsPage(Page):
         )
         self.vindue_ned.pack()
 
+        # Samler alle manuelle knapper i en liste, så et tryk kan disable dem alle.
+        self.manual_buttons = [
+            self.gardin_op,
+            self.gardin_ned,
+            self.vindue_op,
+            self.vindue_ned,
+        ]
+        self.enable_buttons(self.manual_buttons)
+
         knap_row = tk.Frame(change_panel)
         knap_row.pack(fill="x", padx=8, pady=(4, 8))
 
@@ -206,41 +215,26 @@ class SettingsPage(Page):
 
         self.frame.after(10000, lambda: self.enable_buttons(buttons))
 
-    # Hjælpefunktion der aktiverer knapperne igen efter cooldown.
+    # Efter cooldown gendannes den normale state ud fra vindue/gardin-status.
     def enable_buttons(self, buttons):
-        for button in buttons:
-            button.config(state=tk.NORMAL)
+        self.vindue_op.config(state=tk.DISABLED if self.app.window_open else tk.NORMAL)
+        self.vindue_ned.config(state=tk.NORMAL if self.app.window_open else tk.DISABLED)
+        self.gardin_op.config(state=tk.DISABLED if self.app.curtain_open else tk.NORMAL)
+        self.gardin_ned.config(state=tk.NORMAL if self.app.curtain_open else tk.DISABLED)
 
-    # Vinduesknapper disables kun hvis vinduet faktisk skifter state.
+    # Alle manuelle knapper disables samlet efter tryk på en manuel knap.
     def handle_open_window(self):
-        if self.app.window_open:
-            self.app.open_window()
-            return
-
         self.app.open_window()
-        self.disable_buttons([self.vindue_op, self.vindue_ned])
+        self.disable_buttons(self.manual_buttons)
 
     def handle_close_window(self):
-        if not self.app.window_open:
-            self.app.close_window()
-            return
-
         self.app.close_window()
-        self.disable_buttons([self.vindue_op, self.vindue_ned])
+        self.disable_buttons(self.manual_buttons)
 
-    # Gardinknapper disables kun hvis gardinet faktisk skifter state.
     def handle_open_curtain(self):
-        if self.app.curtain_open:
-            self.app.open_curtain()
-            return
-
         self.app.open_curtain()
-        self.disable_buttons([self.gardin_op, self.gardin_ned])
+        self.disable_buttons(self.manual_buttons)
 
     def handle_close_curtain(self):
-        if not self.app.curtain_open:
-            self.app.close_curtain()
-            return
-
         self.app.close_curtain()
-        self.disable_buttons([self.gardin_op, self.gardin_ned])
+        self.disable_buttons(self.manual_buttons)
