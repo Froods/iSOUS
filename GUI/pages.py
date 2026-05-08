@@ -132,45 +132,46 @@ class SettingsPage(Page):
         vindue_row = tk.Frame(side_controls)
         vindue_row.pack(side="left")
 
-        gardin_op = tk.Button(
+        # Gemmer knapperne som attributter, så de kan disables samlet i 10 sekunder.
+        self.gardin_op = tk.Button(
             gardin_row,
             text="Op",
             width=8,
             height=6,
-            command=self.app.open_curtain
+            command=self.handle_open_curtain,
         )
-        gardin_op.pack()
+        self.gardin_op.pack()
 
         tk.Label(gardin_row, text="Gardin").pack(pady=4)
 
-        gardin_ned = tk.Button(
+        self.gardin_ned = tk.Button(
             gardin_row,
             text="Ned",
             width=8,
             height=6,
-            command=self.app.close_curtain
+            command=self.handle_close_curtain,
         )
-        gardin_ned.pack()
+        self.gardin_ned.pack()
 
-        vindue_op = tk.Button(
+        self.vindue_op = tk.Button(
             vindue_row,
-            text="Op",
+            text="Åben",
             width=8,
             height=6,
-            command=self.app.open_window
+            command=self.handle_open_window,
         )
-        vindue_op.pack()
+        self.vindue_op.pack()
 
         tk.Label(vindue_row, text="Vindue").pack(pady=4)
 
-        vindue_ned = tk.Button(
+        self.vindue_ned = tk.Button(
             vindue_row,
-            text="Ned",
+            text="Luk",
             width=8,
             height=6,
-            command=self.app.close_window
+            command=self.handle_close_window,
         )
-        vindue_ned.pack()
+        self.vindue_ned.pack()
 
         knap_row = tk.Frame(change_panel)
         knap_row.pack(fill="x", padx=8, pady=(4, 8))
@@ -191,9 +192,55 @@ class SettingsPage(Page):
         )
         save_button.pack(side="right")
 
-    #Tilføjet metode der læser settings-felterne og sender dem videre til GUI-logikken.
+    # læser settings-felterne og sender dem videre til GUI-logikken.
     def save_settings(self):
         self.app.save_desired_values(
             temp_text=self.wanted_temp.get(),
             co2_level=self.wanted_co2.get(),
         )
+
+    # Hjælpefunktion til at disable en gruppe knapper i 10 sekunder.
+    def disable_buttons(self, buttons):
+        for button in buttons:
+            button.config(state=tk.DISABLED)
+
+        self.frame.after(10000, lambda: self.enable_buttons(buttons))
+
+    # Hjælpefunktion der aktiverer knapperne igen efter cooldown.
+    def enable_buttons(self, buttons):
+        for button in buttons:
+            button.config(state=tk.NORMAL)
+
+    # Vinduesknapper disables kun hvis vinduet faktisk skifter state.
+    def handle_open_window(self):
+        if self.app.window_open:
+            self.app.open_window()
+            return
+
+        self.app.open_window()
+        self.disable_buttons([self.vindue_op, self.vindue_ned])
+
+    def handle_close_window(self):
+        if not self.app.window_open:
+            self.app.close_window()
+            return
+
+        self.app.close_window()
+        self.disable_buttons([self.vindue_op, self.vindue_ned])
+
+    # Gardinknapper disables kun hvis gardinet faktisk skifter state.
+    def handle_open_curtain(self):
+        if self.app.curtain_open:
+            self.app.open_curtain()
+            return
+
+        self.app.open_curtain()
+        self.disable_buttons([self.gardin_op, self.gardin_ned])
+
+    def handle_close_curtain(self):
+        if not self.app.curtain_open:
+            self.app.close_curtain()
+            return
+
+        self.app.close_curtain()
+        self.disable_buttons([self.gardin_op, self.gardin_ned])

@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import types
+import builtins
 
 
 GUI_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -109,6 +110,21 @@ class FakeSerial:
 
 VIRTUAL_UART = VirtualUARTState()
 COMMAND_QUEUE = queue.Queue()
+UART_VERBOSE = False
+ORIGINAL_PRINT = builtins.print
+
+
+def filtered_print(*args, **kwargs):
+    message = " ".join(str(arg) for arg in args)
+    if not UART_VERBOSE and (
+        "Byte modtaget gennem UART:" in message or
+        "Byte sendt gennem UART:" in message
+    ):
+        return
+    ORIGINAL_PRINT(*args, **kwargs)
+
+
+builtins.print = filtered_print
 
 
 import tkinter as tk  # noqa: E402
@@ -135,6 +151,8 @@ def print_help():
         "\nKommandoer:\n"
         "  help                    Vis hjælp\n"
         "  show                    Vis nuværende emulator-state\n"
+        "  buttons                 Vis state for vindue/gardin-knapper i settings\n"
+        "  uart on|off             Tænd/sluk UART debug i emulatoren\n"
         "  temp <0-65535>          Sæt rumtemperatur\n"
         "  co2 <0-65535>           Sæt rum-CO2\n"
         "  outside <0-65535>       Sæt udetemperatur\n"
@@ -142,6 +160,8 @@ def print_help():
         "  desired <temp> <co2>    Sæt ønskede værdier direkte i emulatoren\n"
         "  window open|close       Sæt vinduestilstand i emulatoren\n"
         "  curtain open|close      Sæt gardintilstand i emulatoren\n"
+        "  press window open|close Tryk på vindue-knap i settings (starter cooldown)\n"
+        "  press curtain open|close Tryk på gardin-knap i settings (starter cooldown)\n"
         "  log                     Vis UART kommando-log\n"
         "  refresh                 Tving GUI til at hente nye sensordata nu\n"
         "  quit                    Luk emulator og GUI\n"
@@ -153,6 +173,14 @@ def print_state():
     print("\nAktuel emulator-state:")
     for key, value in state.items():
         print(f"  {key}: {value}")
+
+
+def print_button_states(app):
+    print("\nKnap-states i settings:")
+    print(f"  vindue_op: {app.settings_page.vindue_op.cget('state')}")
+    print(f"  vindue_ned: {app.settings_page.vindue_ned.cget('state')}")
+    print(f"  gardin_op: {app.settings_page.gardin_op.cget('state')}")
+    print(f"  gardin_ned: {app.settings_page.gardin_ned.cget('state')}")
 
 
 def parse_int(value, field_name):
@@ -182,6 +210,22 @@ def handle_command(app, command_line):
 
     if cmd == "show":
         print_state()
+        return True
+
+    if cmd == "buttons":
+        print_button_states(app)
+        return True
+
+    if cmd == "uart" and len(parts) == 2:
+        global UART_VERBOSE
+        if parts[1].lower() == "on":
+            UART_VERBOSE = True
+            print("UART debug er nu tændt")
+        elif parts[1].lower() == "off":
+            UART_VERBOSE = False
+            print("UART debug er nu slukket")
+        else:
+            print("Brug: uart on|off")
         return True
 
     if cmd == "temp" and len(parts) == 2:
@@ -247,6 +291,41 @@ def handle_command(app, command_line):
             print("Brug: curtain open|close")
         return True
 
+    if cmd == "press" and len(parts) == 3:
+        target = parts[1].lower()
+        action = parts[2].lower()
+
+        if target == "window":
+            if action == "open":
+                app.settings_page.handle_open_window()
+                print("Trykkede på vindue Åben-knappen")
+            elif action == "close":
+                app.settings_page.handle_close_window()
+                print("Trykkede på vindue Luk-knappen")
+            else:
+                print("Brug: press window open|close")
+                return True
+
+            print_button_states(app)
+            return True
+
+        if target == "curtain":
+            if action == "open":
+                app.settings_page.handle_open_curtain()
+                print("Trykkede på gardin Op-knappen")
+            elif action == "close":
+                app.settings_page.handle_close_curtain()
+                print("Trykkede på gardin Ned-knappen")
+            else:
+                print("Brug: press curtain open|close")
+                return True
+
+            print_button_states(app)
+            return True
+
+        print("Brug: press window open|close eller press curtain open|close")
+        return True
+
     if cmd == "log":
         print("\nUART kommando-log:")
         for index, entry in enumerate(VIRTUAL_UART.command_log, start=1):
@@ -304,6 +383,8 @@ def run_emulator():
         "Mellem": 200,
         "Høj": 250,
     }
+    if app.client is not None and hasattr(app.client, "set_debug_uart"):
+        app.client.set_debug_uart(False)
 
     print("=== Virtuel sensor-emulator startet ===")
     print("GUI-vinduet bruger nu virtuel UART i stedet for rigtig hardware.")
