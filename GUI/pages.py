@@ -1,5 +1,6 @@
 import tkinter as tk
 
+
 class Page:
     def __init__(self, parent, app):
         self.app = app
@@ -23,11 +24,11 @@ class HomePage(Page):
         realtime_panel = tk.LabelFrame(content_row, text="Realtidsdata")
         realtime_panel.pack(fill="x", anchor="n")
 
-        # Midlertidige variabler til visning af realtime-data
-        self.temp_inside_var = tk.StringVar(value="Temperatur inde: 22.5 ℃")
-        self.temp_outside_var = tk.StringVar(value="Temperatur ude: 9.8 ℃")
-        self.co2_var = tk.StringVar(value="CO2 niveau: 640 ppm")
-        self.light_var = tk.StringVar(value="Lysintensitet: 410 lux")
+        # Alle homepage-felter starter som dynamiske realtime-felter fra GUI-attributter.
+        self.temp_inside_var = tk.StringVar(value="Temperatur inde: --")
+        self.temp_outside_var = tk.StringVar(value="Temperatur ude: --")
+        self.co2_var = tk.StringVar(value="CO2 inde: --")
+        self.light_var = tk.StringVar(value="Lysintensitet: --")
 
         tk.Label(realtime_panel, textvariable=self.temp_inside_var, anchor="w").pack(fill="x", padx=8, pady=(6, 2))
         tk.Label(realtime_panel, textvariable=self.temp_outside_var, anchor="w").pack(fill="x", padx=8, pady=2)
@@ -50,16 +51,43 @@ class HomePage(Page):
         )
         settings_button.pack(side="left", padx=(0, 10))
 
-        stopauto_button = tk.Button(
+        # Gemmer reference til knappen, så dens tekst og farve kan opdateres ud fra manual-state.
+        self.stopauto_button = tk.Button(
             knap_center,
             text="Stop Automatisk \n Styring",
             width=15,
             height=2,
-            bg="green",
-            # tilføj stopauto logik
-            # command=
+            bg="red",
+            command=self.app.toggle_automatic_control,
         )
-        stopauto_button.pack(side="left")
+        self.stopauto_button.pack(side="left")
+        self.refresh_control_mode()
+
+    # HomePage opdaterer alle fire realtime-felter fra GUI-attributterne.
+    def refresh_realtime_data(self):
+        temp_inside_text = "--" if self.app.room_temp is None else f"{self.app.room_temp} C"
+        temp_outside_text = "--" if self.app.temp_outside is None else f"{self.app.temp_outside} C"
+        co2_text = "--" if self.app.room_co2 is None else f"{self.app.room_co2} ppm"
+        light_text = "--" if self.app.light is None else f"{self.app.light} lux"
+
+        # tkinter
+        self.temp_inside_var.set(f"Temperatur inde: {temp_inside_text}")
+        self.temp_outside_var.set(f"Temperatur ude: {temp_outside_text}")
+        self.co2_var.set(f"CO2 inde: {co2_text}")
+        self.light_var.set(f"Lysintensitet: {light_text}")
+
+    # Opdaterer forsiden, så knappen viser om automatisk styring er aktiv eller stoppet.
+    def refresh_control_mode(self):
+        if self.app.manual:
+            self.stopauto_button.config(
+                text="Start Automatisk \n Styring",
+                bg="green",
+            )
+        else:
+            self.stopauto_button.config(
+                text="Stop Automatisk \n Styring",
+                bg="red",
+            )
 
 
 class SettingsPage(Page):
@@ -79,16 +107,17 @@ class SettingsPage(Page):
 
         # Midlertidig variabel til temperature input
         self.wanted_temp = tk.StringVar(value="")
-        tk.Label(change_panel, text="Ønsket temperatur (℃):", anchor="w").pack(fill="x", padx=8, pady=(8, 2))
+        tk.Label(change_panel, text="Ønsket temperatur (C):", anchor="w").pack(fill="x", padx=8, pady=(8, 2))
         tk.Entry(change_panel, textvariable=self.wanted_temp).pack(fill="x", padx=8, pady=(0, 8))
 
-        # CO2 niveau med 3 bullets
-        self.co2_level_var = tk.StringVar(value="Mellem")
+        # CO2 niveau med 4 bullets
+        self.wanted_co2 = tk.StringVar(value="Lav")
         tk.Label(change_panel, text="CO2 niveau:", anchor="w").pack(fill="x", padx=8, pady=(2, 2))
 
-        tk.Radiobutton(change_panel, text="Lav", variable=self.co2_level_var, value="Lav").pack(anchor="w", padx=12)
-        tk.Radiobutton(change_panel, text="Mellem", variable=self.co2_level_var, value="Mellem").pack(anchor="w", padx=12)
-        tk.Radiobutton(change_panel, text="Høj", variable=self.co2_level_var, value="Hoj").pack(anchor="w", padx=12)
+        tk.Radiobutton(change_panel, text="Ureguleret", variable=self.wanted_co2, value="Ureguleret").pack(anchor="w", padx=12)
+        tk.Radiobutton(change_panel, text="Lav", variable=self.wanted_co2, value="Lav").pack(anchor="w", padx=12)
+        tk.Radiobutton(change_panel, text="Mellem", variable=self.wanted_co2, value="Mellem").pack(anchor="w", padx=12)
+        tk.Radiobutton(change_panel, text="Høj", variable=self.wanted_co2, value="Høj").pack(anchor="w", padx=12)
 
         # Spacer så knapperne bliver i bunden af change_panel
         tk.Frame(change_panel).pack(fill="both", expand=True)
@@ -103,41 +132,55 @@ class SettingsPage(Page):
         vindue_row = tk.Frame(side_controls)
         vindue_row.pack(side="left")
 
-        gardin_op = tk.Button(
+        # Gemmer knapperne som attributter, så de kan disables samlet i 10 sekunder.
+        self.gardin_op = tk.Button(
             gardin_row,
-            text="↑",
+            text="Op",
             width=8,
             height=6,
+            command=self.handle_open_curtain,
         )
-        gardin_op.pack()
+        self.gardin_op.pack()
 
         tk.Label(gardin_row, text="Gardin").pack(pady=4)
 
-        gardin_ned = tk.Button(
+        self.gardin_ned = tk.Button(
             gardin_row,
-            text="↓",
+            text="Ned",
             width=8,
             height=6,
+            command=self.handle_close_curtain,
         )
-        gardin_ned.pack()
+        self.gardin_ned.pack()
 
-        vindue_op = tk.Button(
+        self.vindue_op = tk.Button(
             vindue_row,
-            text="↑",
+            text="Åben",
             width=8,
             height=6,
+            command=self.handle_open_window,
         )
-        vindue_op.pack()
+        self.vindue_op.pack()
 
         tk.Label(vindue_row, text="Vindue").pack(pady=4)
 
-        vindue_ned = tk.Button(
+        self.vindue_ned = tk.Button(
             vindue_row,
-            text="↓",
+            text="Luk",
             width=8,
             height=6,
+            command=self.handle_close_window,
         )
-        vindue_ned.pack()
+        self.vindue_ned.pack()
+
+        # Samler alle manuelle knapper i en liste, så et tryk kan disable dem alle.
+        self.manual_buttons = [
+            self.gardin_op,
+            self.gardin_ned,
+            self.vindue_op,
+            self.vindue_ned,
+        ]
+        self.enable_buttons(self.manual_buttons)
 
         knap_row = tk.Frame(change_panel)
         knap_row.pack(fill="x", padx=8, pady=(4, 8))
@@ -154,6 +197,44 @@ class SettingsPage(Page):
             knap_row,
             text="Gem",
             width=15,
-            # command=
+            command=self.save_settings,
         )
         save_button.pack(side="right")
+
+    # læser settings-felterne og sender dem videre til GUI-logikken.
+    def save_settings(self):
+        self.app.save_desired_values(
+            temp_text=self.wanted_temp.get(),
+            co2_level=self.wanted_co2.get(),
+        )
+
+    # Hjælpefunktion til at disable en gruppe knapper i 10 sekunder.
+    def disable_buttons(self, buttons):
+        for button in buttons:
+            button.config(state=tk.DISABLED)
+
+        self.frame.after(10000, lambda: self.enable_buttons(buttons))
+
+    # Efter cooldown gendannes den normale state ud fra vindue/gardin-status.
+    def enable_buttons(self, buttons):
+        self.vindue_op.config(state=tk.DISABLED if self.app.window_open else tk.NORMAL)
+        self.vindue_ned.config(state=tk.NORMAL if self.app.window_open else tk.DISABLED)
+        self.gardin_op.config(state=tk.DISABLED if self.app.curtain_open else tk.NORMAL)
+        self.gardin_ned.config(state=tk.NORMAL if self.app.curtain_open else tk.DISABLED)
+
+    # Alle manuelle knapper disables samlet efter tryk på en manuel knap.
+    def handle_open_window(self):
+        self.app.open_window()
+        self.disable_buttons(self.manual_buttons)
+
+    def handle_close_window(self):
+        self.app.close_window()
+        self.disable_buttons(self.manual_buttons)
+
+    def handle_open_curtain(self):
+        self.app.open_curtain()
+        self.disable_buttons(self.manual_buttons)
+
+    def handle_close_curtain(self):
+        self.app.close_curtain()
+        self.disable_buttons(self.manual_buttons)

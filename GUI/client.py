@@ -7,11 +7,11 @@ import struct
 ###########################
 
 # - 0x01: Send ønskede værdier
-#   - Parameter 1: temperatur
-#   - Parameter 2: co2
+#   - Parameter 1: Temperatur
+#   - Parameter 2: CO2
 CMD_SET_DESIRED_VALUES = 0x01
 
-# - 0x02: Læs nuværende temperatur
+# - 0x02: Læs nuværende inde temperatur
 #   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
 #   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
 CMD_GET_ROOM_TEMP = 0x02
@@ -20,6 +20,31 @@ CMD_GET_ROOM_TEMP = 0x02
 #   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
 #   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
 CMD_GET_ROOM_CO2 = 0x03
+
+# - 0x04: Læs nuværende ude temperatur
+#   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_GET_OUTSIDE_TEMP = 0x04
+
+# - 0x05: Læs nuværende lys-niveau
+#   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_GET_LIGHT = 0x05
+
+# - 0x06: Send vindue status
+#   - Parameter 1: åben(1)/lukket(0)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_SET_WINDOW_STATE = 0x06
+
+# - 0x07: Set gardin status
+#   - Parameter 1: åben(1)/lukket(0)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_SET_CURTAIN_STATE = 0x07
+
+# - 0x08: Set toggle auto mode
+#   - Parameter 1: Tændt(1)/Slukket(0)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_TOGGLE_AUTO_MODE = 0x08
 
 ###########################
 
@@ -36,93 +61,132 @@ PARAMETER_OMITTED = 0x00
 EXPECTED_BYTES = 4
 
 class Client:
-	 
-	def __init__(self, port, baudrate, timeout):
-		# Initialiser attributter
-		self.__port = port
-		self.__baudrate = baudrate
-		self.__timeout = timeout
-		self.__manual = False
+    def __init__(self, port, baudrate, timeout):
+        # Initialiser attributter
+        self.__port = port
+        self.__baudrate = baudrate
+        self.__timeout = timeout
+        self.__manual = False
 
-		# Initialiser Serial object fra pyserial
-		self.ser = serial.Serial(
-			port=port,
-			baudrate=baudrate,
-			timeout=timeout
-		)
+        # Initialiser Serial object fra pyserial
+        self.ser = serial.Serial(
+            port=port,
+            baudrate=baudrate,
+            timeout=timeout
+        )
 
-		# Vent på forbindelsen stabiliserer 
-		time.sleep(2)
+        # Vent på forbindelsen stabiliserer
+        time.sleep(2)
 
-		# Print forbindelses status
-		if self.ser.is_open:
-			print(f"Forbundet til {self.ser.portstr}")
-		else:
-			print("Error: Ikke forbundet til nogen port")
-	
-	# --- Public methods ---
+        # Print forbindelses status
+        if self.ser.is_open:
+            print(f"Forbundet til {self.ser.portstr}")
+        else:
+            print("Error: Ikke forbundet til nogen port")
 
-	def send_desired_values(self, temp, co2):
-		if self.ser.is_open:
-			# Send kommando med data
-			self.__send_command_UART(cmd=CMD_SET_DESIRED_VALUES, par1=temp, par2=co2)
-		else:
-			# Ved fejl: informer udvikler
-			print("Error: Ikke forbundet til nogen port")
+    # --- Public methods ---
+    def send_desired_values(self, temp, co2):
+        if self.ser.is_open:
+            # Send kommando med data
+            self.__send_command_UART(cmd=CMD_SET_DESIRED_VALUES, par1=temp, par2=co2)
+        else:
+            # Ved fejl: informer udvikler
+            print("Error: Ikke forbundet til nogen port")
 
-	def get_room_temp(self):
-		# Fjern alle garbage værdier i RX buffer
-		self.ser.reset_input_buffer()
-		# Send kommando
-		self.__send_command_UART(cmd=CMD_GET_ROOM_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
-		# Gem modtaget data i variabel
-		response = self.ser.read(EXPECTED_BYTES)
+    def get_room_temp(self):
+        # Fjern alle garbage værdier i RX buffer
+        self.ser.reset_input_buffer()
+        # Send kommando
+        self.__send_command_UART(cmd=CMD_GET_ROOM_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        # Gem modtaget data i variabel
+        response = self.ser.read(EXPECTED_BYTES)
 
-		# Hvis respons er valid -> Returner
-		# Ellers -> Print fejl
-		if len(response) == EXPECTED_BYTES:
-			print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
-			return response
-		else:
-			print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
-			return None
-		
+        # Hvis respons er valid -> Returner
+        # Ellers -> Print fejl
+        if len(response) == EXPECTED_BYTES:
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+            print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+            return None
 
-	def get_room_co2(self):
-		# Fjern alle garbage værdier i RX buffer
-		self.ser.reset_input_buffer()
-		# Send kommando
-		self.__send_command_UART(cmd=CMD_GET_ROOM_CO2, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
-		# Gem modtaget data i variabel
-		response = self.ser.read(EXPECTED_BYTES)
+    def get_room_co2(self):
+        # Fjern alle garbage værdier i RX buffer
+        self.ser.reset_input_buffer()
+        # Send kommando
+        self.__send_command_UART(cmd=CMD_GET_ROOM_CO2, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        # Gem modtaget data i variabel
+        response = self.ser.read(EXPECTED_BYTES)
 
-		# Hvis respons er valid -> Returner
-		# Ellers -> Print fejl
-		if len(response) == EXPECTED_BYTES:
-			print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
-			return response
-		else:
-			print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
-			return None
+        # Hvis respons er valid -> Returner
+        # Ellers -> Print fejl
+        if len(response) == EXPECTED_BYTES:
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+            print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+            return None
 
-	# --- Private methods ---
+    def get_outside_temp(self):
+        self.ser.reset_input_buffer()
+        self.__send_command_UART(cmd=CMD_GET_OUTSIDE_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        response = self.ser.read(EXPECTED_BYTES)
 
-	def __pack_values(self, cmd, par1, par2):
-		# --- Parametre til strcut.pack ---
-		# 1. Parameter: Hvordan data skal pakkes
-		# 2. Parameter: Kommando
-		# 3. Parameter: Parameter 1 (til kommando)
-		# 4. Parameter: Parameter 2 (til kommando)
-		# 4. Parameter: STOPBYTE
-		return struct.pack('>BBBB', cmd, par1, par2, STOPBYTE)
-	
-	def __send_command_UART(self, cmd, par1, par2):
-		# Pak data i respektive bytes
-		packet = self.__pack_values(cmd=cmd, par1=par1, par2=par2)
+        if len(response) == EXPECTED_BYTES:
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+            print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+            return None
 
-		# Send data
-		self.ser.write(packet)
-		self.ser.flush()
+    def get_light(self):
+        self.ser.reset_input_buffer()
+        self.__send_command_UART(cmd=CMD_GET_LIGHT, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        response = self.ser.read(EXPECTED_BYTES)
+        if len(response) == EXPECTED_BYTES:
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+             print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+             return None
 
-		# Print sendt byte
-		print(f"Byte sendt gennem UART: \n{packet.hex(' ')}")
+    def set_window_state(self, is_open):
+        if self.ser.is_open:
+            par1 = 1 if is_open else 0
+            self.__send_command_UART(cmd=CMD_SET_WINDOW_STATE, par1=par1, par2=PARAMETER_OMITTED)
+        else:
+            print("Error: Ikke forbundet til nogen port")
+
+    def set_curtain_state(self, is_open):
+        if self.ser.is_open:
+            par1 = 1 if is_open else 0
+            self.__send_command_UART(cmd=CMD_SET_CURTAIN_STATE, par1=par1, par2=PARAMETER_OMITTED)
+        else:
+            print("Error: Ikke forbundet til nogen port")
+
+    def toggle_auto_mode(self, is_auto):
+        if self.ser.is_open:
+            par1 = 1 if is_auto else 0
+            self.__send_command_UART(cmd=CMD_TOGGLE_AUTO_MODE, par1=par1, par2=PARAMETER_OMITTED)
+        else:
+            print("Error: Ikke forbundet til nogen port")
+
+
+    # --- Private methods ---
+
+    def __pack_values(self, cmd, par1, par2):
+        # --- Parametre til struct.pack ---
+        # 1. Parameter: Hvordan data skal pakkes
+        # 2. Parameter: Kommando
+        # 3. Parameter: Parameter 1 (til kommando)
+        # 4. Parameter: Parameter 2 (til kommando)
+        # 5. Parameter: STOPBYTE
+        return struct.pack(">BBBB", cmd, par1, par2, STOPBYTE)
+
+    def __send_command_UART(self, cmd, par1, par2):
+        # Pak data i respektive bytes
+        packet = self.__pack_values(cmd=cmd, par1=par1, par2=par2)
+
+        # Send data
+        self.ser.write(packet)
+        self.ser.flush()
