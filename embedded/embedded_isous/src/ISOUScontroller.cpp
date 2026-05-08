@@ -10,6 +10,27 @@ ISOUSController::ISOUSController(I2C &i2c, UserSettings &s)
 {}
 
 
+void ISOUSController::init() {
+    SCD30_.begin();
+    TSL2561_.begin();
+}
+
+
+void ISOUSController::update() {
+    syncSensorData();
+    if (settings_.isManual()) {
+        // honor user's manual targets from UART
+        if (settings_.getWindowTargetState() && !window_.getIsOpen())   window_.openWindow();
+        if (!settings_.getWindowTargetState() && window_.getIsOpen())   window_.closeWindow();
+        if (settings_.getCurtainTargetState() && !curtain_.getIsOut())  curtain_.rollOutCurtain();
+        if (!settings_.getCurtainTargetState() && curtain_.getIsOut())  curtain_.rollInCurtain();
+    } else {
+        evaluateWindow();
+        evaluateCurtain();
+    }
+}
+
+
 void ISOUSController::syncSensorData(){ 
     //Lav en ny måling for hver sensor
     if (SCD30_.readData() == SCD30_OK) {

@@ -20,7 +20,7 @@ private:
     CurtainMotor curtain_;
 
 	int n = 11;
-
+    
     void evaluateWindow();
     void evaluateCurtain();
     void syncSensorData();
@@ -28,6 +28,7 @@ private:
 public:
     ISOUSController(I2C &i2c, UserSettings &s);
 
+    void init();
     void update();
 };
 
