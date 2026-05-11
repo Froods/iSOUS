@@ -12,6 +12,8 @@ class GUI:
     OUTSIDE_TEMP_ID = 0x03
     LIGHT_ID = 0x04
     STOPBYTE = 0xFF
+    WINDOW_STATE_ID = 0x05
+    CURTAIN_STATE_ID = 0x06
 
     # GUI'en initialiserer alle realtime-attributter, som forsiden bruger.
     def __init__(self, port="COM4", baudrate=9600, timeout=5):
@@ -184,6 +186,22 @@ class GUI:
                 room_co2 = self._parse_sensor_response(self.client.get_room_co2(), self.ROOM_CO2_ID)
                 outside_temp = self._parse_sensor_response(self.client.get_outside_temp(), self.OUTSIDE_TEMP_ID)
                 light = self._parse_sensor_response(self.client.get_light(), self.LIGHT_ID)
+
+                returned_window_arr = self.client.get_window_open()
+                if (returned_window_arr[1] == 0x01):
+                    self.window_open = True
+                elif (returned_window_arr[1] == 0x00):
+                    self.window_open = False
+                else:
+                    print(f"error (window state) - byte recivied: {returned_window_arr[1]}")
+
+                returned_curtain_arr = self.client.get_curtain_open()
+                if (returned_curtain_arr[1] == 0x01):
+                    self.curtain_open = False
+                elif (returned_curtain_arr[1] == 0x00):
+                    self.curtain_open = True
+                else:
+                    print(f"error (curtain state) - byte recivied: {returned_curtain_arr[1]}")
 
                 if room_temp is not None:
                     self.room_temp = room_temp
