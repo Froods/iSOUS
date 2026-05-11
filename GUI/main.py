@@ -14,7 +14,7 @@ class GUI:
     STOPBYTE = 0xFF
 
     # GUI'en initialiserer alle realtime-attributter, som forsiden bruger.
-    def __init__(self, port="COM4", baudrate=9600, timeout=1):
+    def __init__(self, port="COM4", baudrate=9600, timeout=5):
         self.root = tk.Tk()
         self.root.geometry("640x360")
         self.root.title("iSOUS")

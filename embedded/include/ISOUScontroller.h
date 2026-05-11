@@ -24,6 +24,7 @@ private:
     void evaluateWindow();
     void evaluateCurtain();
     void syncSensorData();
+    void applyManualTargets();
 
 public:
     ISOUSController(I2C &i2c, UserSettings &s);

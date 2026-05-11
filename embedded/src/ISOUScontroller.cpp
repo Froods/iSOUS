@@ -18,11 +18,7 @@ void ISOUSController::init() {
 void ISOUSController::update() {
     syncSensorData();
     if (settings_.isManual()) {
-        // honor user's manual targets from UART
-        if (settings_.getWindowTargetState() && !window_.getIsOpen())   window_.openWindow();
-        if (!settings_.getWindowTargetState() && window_.getIsOpen())   window_.closeWindow();
-        if (settings_.getCurtainTargetState() && !curtain_.getIsOut())  curtain_.rollOutCurtain();
-        if (!settings_.getCurtainTargetState() && curtain_.getIsOut())  curtain_.rollInCurtain();
+        applyManualTargets();
     } else {
         evaluateWindow();
         evaluateCurtain();
@@ -36,11 +32,11 @@ void ISOUSController::syncSensorData() {
     } 
 
     if (LM75_.readData() == LM75_OK) {
-        settings_.setOutTemp(LM75_.getTempC());
+        settings_.setOutTemp(static_cast<int>(LM75_.getTempC()));
     } 
     if (SCD30_.readData() == SCD30_OK) {
-        settings_.setRoomTemp(SCD30_.getTemperature());
-        settings_.setActualCO2(SCD30_.getCO2());
+        settings_.setRoomTemp(static_cast<int>(SCD30_.getTemperature()));
+        settings_.setActualCO2(static_cast<int>(SCD30_.getCO2()));
     } 
 }
 
@@ -74,22 +70,34 @@ void ISOUSController::evaluateWindow() {
     // ---- 3) Beslut vinduestilstand ----
     // CO2 har højeste prioritet: skal udluftes uanset temperatur
     if (co2TooHigh) {
-        if (!window_.getIsOpen()) window_.openWindow();
+        if (!window_.getIsOpen()){
+        window_.openWindow();
+        settings_.setWindowTargetState(true);
+        }
         return;
     }
 
     if (tooHot && canCoolByVenting) {
-        if (!window_.getIsOpen()) window_.openWindow();
+        if (!window_.getIsOpen()){
+        window_.openWindow();
+        settings_.setWindowTargetState(true);
+        }
     }
     else if (tooCold && canHeatByVenting) {
-        if (!window_.getIsOpen()) window_.openWindow();
+        if (!window_.getIsOpen()){
+        window_.openWindow();
+        settings_.setWindowTargetState(true);
+        }
     }
     else if (inBand) {
         // Inden for hysterese-bånd – lad vinduet stå som det står
     }
     else {
         // Ude favoriserer ikke åbning (fx for koldt ude, for varmt inde)
-        if (window_.getIsOpen()) window_.closeWindow();
+        if (window_.getIsOpen()){
+        window_.closeWindow();
+        settings_.setWindowTargetState(false);
+        }
     }
 }
 
@@ -114,18 +122,40 @@ void ISOUSController::evaluateCurtain() {
 
     if (tooHot && sunShining) {
         // Bloker sol for at køle ned
-        if (!curtain_.getIsOut()) curtain_.rollOutCurtain();
-    }
+            if (!curtain_.getIsOut()){ 
+            curtain_.rollOutCurtain();
+            settings_.setCurtainTargetState(false);
+            }
     else if (tooCold && sunShining) {
-        // Luk solens varme ind
-        if (curtain_.getIsOut()) curtain_.rollInCurtain();
-    }
+            // Luk solens varme ind
+            if (curtain_.getIsOut()){
+            curtain_.rollInCurtain();
+            settings_.setCurtainTargetState(true);
+            }
+        }
     else if (tooCold && !sunShining) {
         // Isoler – scenarie 6 i datavariationslisten
-        if (!curtain_.getIsOut()) curtain_.rollOutCurtain();
+        if (!curtain_.getIsOut()){
+        curtain_.rollOutCurtain();
+        settings_.setCurtainTargetState(false);
+        }
     }
     else if (inBand) {
         // Hysterese: lad gardinet stå
     }
     // tooHot && !sunShining: ingen sol at blokere – ingen handling
+    }
 }
+
+
+
+void ISOUSController::applyManualTargets() {
+    bool wantWindowOpen = settings_.getWindowTargetState();
+    if (wantWindowOpen && !window_.getIsOpen())  window_.openWindow();
+    if (!wantWindowOpen && window_.getIsOpen())  window_.closeWindow();
+
+    bool wantCurtainOpen = settings_.getCurtainTargetState();
+    if (!wantCurtainOpen && !curtain_.getIsOut())  curtain_.rollOutCurtain();
+    if (wantCurtainOpen && curtain_.getIsOut())  curtain_.rollInCurtain();
+}
+

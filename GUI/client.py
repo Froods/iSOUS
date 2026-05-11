@@ -65,7 +65,7 @@ class Client:
         self.__port = port
         self.__baudrate = baudrate
         self.__timeout = timeout
-        self.__manual = False
+        self.manual = False
 
         # Initialiser Serial object fra pyserial
         self.ser = serial.Serial(
@@ -186,6 +186,8 @@ class Client:
         # Pak data i respektive bytes
         packet = self.__pack_values(cmd=cmd, par1=par1, par2=par2)
 
+        print("Packet sent: \n",packet)
+        print("\n")
         # Send data
         self.ser.write(packet)
         self.ser.flush()

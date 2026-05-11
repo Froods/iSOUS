@@ -127,7 +127,7 @@ void UARTinterface::parseCommand() {
 			break;
 		}
 		case TOGGLE_MANUAL: {
-				if (par1 == 0x01) {
+				if (par1 == 0x00) {
 					settings_.enableManual();
 				} else {
 					settings_.disableManual();
