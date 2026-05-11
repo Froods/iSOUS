@@ -134,12 +134,29 @@ void UARTinterface::parseCommand() {
 				}
 			break;
 		}
+		case CMD_GET_WINDOW_STATE: {
+			char window_state = settings_.getWindowTargetState() ? 0x01 : 0x00;
+			char toSend[6] = {WINDOW_STATE, window_state, PARAMETER_OMITTED, PARAMETER_OMITTED, PARAMETER_OMITTED, STOPBYTE};
+			sendResponse(toSend);
+			break;
+		}
+		case CMD_GET_CURTAIN_STATE: {
+			char curtain_state = settings_.getCurtainTargetState() ? 0x01 : 0x00;
+			char toSend[6] = {CURTAIN_STATE, curtain_state, PARAMETER_OMITTED, PARAMETER_OMITTED, PARAMETER_OMITTED, STOPBYTE};
+			sendResponse(toSend);
+			break;
+		}
 		default: {
 			return;
 		}
 	}
 
 }
+
+static const char CMD_GET_WINDOW_STATE =0x09;
+	static const char CMD_GET_CURTAIN_STATE =0x0A;
+
+
 void UARTinterface::sendResponse(char* command) {
     Serial.write(reinterpret_cast<uint8_t*>(command), 6);
 }
