@@ -75,13 +75,13 @@ bool UserSettings::getCurtainTargetState() const {
  * 
  */
 void UserSettings::setCO2Setting(int co2) {
-    if (co2 < 750) {
-		CO2Setting_ = CO2Setting::Minimum_CO2;
-	} else if (co2 < 1000) {
-		CO2Setting_ = CO2Setting::Normalt_indeklima;
-	} else {
-		CO2Setting_ = CO2Setting::Hoej;
-	}
+    switch (co2) {
+        case 0:  CO2Setting_ = CO2Setting::Ureguleret;       break;
+        case 1:  CO2Setting_ = CO2Setting::Minimum_CO2;      break;
+        case 2:  CO2Setting_ = CO2Setting::Normalt_indeklima; break;
+        case 3:  CO2Setting_ = CO2Setting::Hoej;             break;
+        default: CO2Setting_ = CO2Setting::Ureguleret;       break;
+    }
 }
 
 /**

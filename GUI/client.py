@@ -56,9 +56,8 @@ PARAMETER_OMITTED = 0x00
 
 ###########################
 
-# Vi vil også indstille en konstant størrelse af bytes til at blive modtaget fra arduinoen
-#  - Expected bytes
-EXPECTED_BYTES = 4
+# GUI sender stadig 4-byte kommandoer, men embedded svarer med 6-byte datapakker.
+EXPECTED_RESPONSE_BYTES = 6
 
 class Client:
     def __init__(self, port, baudrate, timeout):
@@ -99,11 +98,11 @@ class Client:
         # Send kommando
         self.__send_command_UART(cmd=CMD_GET_ROOM_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
         # Gem modtaget data i variabel
-        response = self.ser.read(EXPECTED_BYTES)
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
 
         # Hvis respons er valid -> Returner
         # Ellers -> Print fejl
-        if len(response) == EXPECTED_BYTES:
+        if len(response) == EXPECTED_RESPONSE_BYTES:
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -116,11 +115,11 @@ class Client:
         # Send kommando
         self.__send_command_UART(cmd=CMD_GET_ROOM_CO2, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
         # Gem modtaget data i variabel
-        response = self.ser.read(EXPECTED_BYTES)
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
 
         # Hvis respons er valid -> Returner
         # Ellers -> Print fejl
-        if len(response) == EXPECTED_BYTES:
+        if len(response) == EXPECTED_RESPONSE_BYTES:
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -130,9 +129,9 @@ class Client:
     def get_outside_temp(self):
         self.ser.reset_input_buffer()
         self.__send_command_UART(cmd=CMD_GET_OUTSIDE_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
-        response = self.ser.read(EXPECTED_BYTES)
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
 
-        if len(response) == EXPECTED_BYTES:
+        if len(response) == EXPECTED_RESPONSE_BYTES:
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -142,8 +141,8 @@ class Client:
     def get_light(self):
         self.ser.reset_input_buffer()
         self.__send_command_UART(cmd=CMD_GET_LIGHT, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
-        response = self.ser.read(EXPECTED_BYTES)
-        if len(response) == EXPECTED_BYTES:
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
+        if len(response) == EXPECTED_RESPONSE_BYTES:
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:

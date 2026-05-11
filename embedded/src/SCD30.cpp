@@ -65,7 +65,6 @@ void SCD30::begin() {
     if (I2C_BUS.write(0x81) != I2C_OK) return;
     I2C_BUS.stop();
 
-    Serial.println("SCD30: Measurement Command Sent.");
 }
 
 

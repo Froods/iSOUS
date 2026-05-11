@@ -6,8 +6,15 @@ from pages import HomePage, SettingsPage
 
 # self er objektet som man arbejder på
 class GUI:
+    # Svar-ID'er matcher embedded UARTinterface.h.
+    ROOM_TEMP_ID = 0x01
+    ROOM_CO2_ID = 0x02
+    OUTSIDE_TEMP_ID = 0x03
+    LIGHT_ID = 0x04
+    STOPBYTE = 0xFF
+
     # GUI'en initialiserer alle realtime-attributter, som forsiden bruger.
-    def __init__(self, port="COM3", baudrate=9600, timeout=1):
+    def __init__(self, port="COM4", baudrate=9600, timeout=1):
         self.root = tk.Tk()
         self.root.geometry("640x360")
         self.root.title("iSOUS")
@@ -146,27 +153,37 @@ class GUI:
         self.settings_page.gardin_ned.config(state=tk.NORMAL if self.curtain_open else tk.DISABLED)
         self.settings_page.show()
 
-    # GUI'en parser rå sensor-bytes, så client.py kan blive i sin oprindelige form.
-    def _parse_sensor_response(self, response):
+    # Parser 6-byte svar fra embedded.
+    def _parse_sensor_response(self, response, expected_type):
         if response is None:
             return None
-    # er alle disse if's nødvendige?
-        if len(response) != 4:
+
+        if len(response) != 6:
             return None
 
-        if response[-1] == 0xFF:
-            return int.from_bytes(response[1:3], byteorder="big")
+        response_type = response[0]
+        payload = response[1:5]
+        stopbyte = response[5]
 
-        return int.from_bytes(response, byteorder="big")
+        if stopbyte != self.STOPBYTE:
+            return None
+
+        if response_type != expected_type:
+            return None
+
+        if response_type == self.LIGHT_ID:
+            return int.from_bytes(payload, byteorder="big")
+
+        return payload[0]
 
     # update_sensor_values samler sensordata via de oprindelige client-metoder.
     def update_sensor_values(self):
         if self.client is not None:
             try:
-                room_temp = self._parse_sensor_response(self.client.get_room_temp())
-                room_co2 = self._parse_sensor_response(self.client.get_room_co2())
-                outside_temp=self._parse_sensor_response(self.client.get_outside_temp())
-                light = self._parse_sensor_response(self.client.get_light())
+                room_temp = self._parse_sensor_response(self.client.get_room_temp(), self.ROOM_TEMP_ID)
+                room_co2 = self._parse_sensor_response(self.client.get_room_co2(), self.ROOM_CO2_ID)
+                outside_temp = self._parse_sensor_response(self.client.get_outside_temp(), self.OUTSIDE_TEMP_ID)
+                light = self._parse_sensor_response(self.client.get_light(), self.LIGHT_ID)
 
                 if room_temp is not None:
                     self.room_temp = room_temp
