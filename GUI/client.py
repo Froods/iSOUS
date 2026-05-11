@@ -46,6 +46,16 @@ CMD_SET_CURTAIN_STATE = 0x07
 #   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
 CMD_TOGGLE_AUTO_MODE = 0x08
 
+# - 0x09: Læs window state
+#   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_GET_WINDOW_OPEN = 0x09
+
+# - 0x0A: Læs curtain state
+#   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_GET_CURTAIN_OPEN = 0x0A
+
 ###########################
 
 # Vi vil også sende en stop byte til sidst med værdien:
@@ -65,7 +75,7 @@ class Client:
         self.__port = port
         self.__baudrate = baudrate
         self.__timeout = timeout
-        self.manual = False
+        self.__manual = False
 
         # Initialiser Serial object fra pyserial
         self.ser = serial.Serial(
@@ -84,6 +94,40 @@ class Client:
             print("Error: Ikke forbundet til nogen port")
 
     # --- Public methods ---
+    def get_window_open(self):
+        # Fjern alle garbage værdier i RX buffer
+        self.ser.reset_input_buffer()
+        # Send kommando
+        self.__send_command_UART(cmd=CMD_GET_WINDOW_OPEN, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        # Gem modtaget data i variabel
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
+
+        # Hvis respons er valid -> Returner
+        # Ellers -> Print fejl
+        if len(response) == EXPECTED_RESPONSE_BYTES:
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+            print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+            return None
+
+    def get_curtain_open(self):
+        # Fjern alle garbage værdier i RX buffer
+        self.ser.reset_input_buffer()
+        # Send kommando
+        self.__send_command_UART(cmd=CMD_GET_CURTAIN_OPEN, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        # Gem modtaget data i variabel
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
+
+        # Hvis respons er valid -> Returner
+        # Ellers -> Print fejl
+        if len(response) == EXPECTED_RESPONSE_BYTES:
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+            print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+            return None
+				
     def send_desired_values(self, temp, co2):
         if self.ser.is_open:
             # Send kommando med data
@@ -163,12 +207,14 @@ class Client:
         else:
             print("Error: Ikke forbundet til nogen port")
 
-    def toggle_auto_mode(self, is_auto):
+    def  o_mode(self, is_auto):
         if self.ser.is_open:
             par1 = 1 if is_auto else 0
             self.__send_command_UART(cmd=CMD_TOGGLE_AUTO_MODE, par1=par1, par2=PARAMETER_OMITTED)
         else:
             print("Error: Ikke forbundet til nogen port")
+            
+
 
 
     # --- Private methods ---
@@ -186,8 +232,6 @@ class Client:
         # Pak data i respektive bytes
         packet = self.__pack_values(cmd=cmd, par1=par1, par2=par2)
 
-        print("Packet sent: \n",packet)
-        print("\n")
         # Send data
         self.ser.write(packet)
         self.ser.flush()
