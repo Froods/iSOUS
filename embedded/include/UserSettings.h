@@ -15,7 +15,7 @@ class UserSettings {
 
 private:
 
-	bool windowToBeOpen_;
+	bool windowToBeOpen_ = false;
     CO2Setting CO2Setting_;
     int targetTemp_;
 
@@ -24,7 +24,7 @@ private:
 	int outTemp_ = 0;
 	uint32_t light_;
 
-	bool curtainToBeOpen_;
+	bool curtainToBeOpen_ = true;
 	bool manual_ = false;
 
 

@@ -104,7 +104,7 @@ class Client:
 
         # Hvis respons er valid -> Returner
         # Ellers -> Print fejl
-        if len(response) == EXPECTED_RESPONSE_BYTES:
+        if (len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x05)):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -121,7 +121,7 @@ class Client:
 
         # Hvis respons er valid -> Returner
         # Ellers -> Print fejl
-        if len(response) == EXPECTED_RESPONSE_BYTES:
+        if (len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x06)):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -146,7 +146,7 @@ class Client:
 
         # Hvis respons er valid -> Returner
         # Ellers -> Print fejl
-        if len(response) == EXPECTED_RESPONSE_BYTES:
+        if (len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x01)):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -163,7 +163,7 @@ class Client:
 
         # Hvis respons er valid -> Returner
         # Ellers -> Print fejl
-        if len(response) == EXPECTED_RESPONSE_BYTES:
+        if (len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x02)):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -175,7 +175,7 @@ class Client:
         self.__send_command_UART(cmd=CMD_GET_OUTSIDE_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
         response = self.ser.read(EXPECTED_RESPONSE_BYTES)
 
-        if len(response) == EXPECTED_RESPONSE_BYTES:
+        if (len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x03)):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -186,7 +186,7 @@ class Client:
         self.ser.reset_input_buffer()
         self.__send_command_UART(cmd=CMD_GET_LIGHT, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
         response = self.ser.read(EXPECTED_RESPONSE_BYTES)
-        if len(response) == EXPECTED_RESPONSE_BYTES:
+        if (len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x04)):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -207,7 +207,7 @@ class Client:
         else:
             print("Error: Ikke forbundet til nogen port")
 
-    def  o_mode(self, is_auto):
+    def  toggle_auto_mode(self, is_auto):
         if self.ser.is_open:
             par1 = 1 if is_auto else 0
             self.__send_command_UART(cmd=CMD_TOGGLE_AUTO_MODE, par1=par1, par2=PARAMETER_OMITTED)
@@ -218,7 +218,6 @@ class Client:
 
 
     # --- Private methods ---
-
     def __pack_values(self, cmd, par1, par2):
         # --- Parametre til struct.pack ---
         # 1. Parameter: Hvordan data skal pakkes
@@ -231,7 +230,8 @@ class Client:
     def __send_command_UART(self, cmd, par1, par2):
         # Pak data i respektive bytes
         packet = self.__pack_values(cmd=cmd, par1=par1, par2=par2)
-
+        print("Packet sent: \n",packet)
+        print("\n")
         # Send data
         self.ser.write(packet)
         self.ser.flush()

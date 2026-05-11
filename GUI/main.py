@@ -197,9 +197,9 @@ class GUI:
 
                 returned_curtain_arr = self.client.get_curtain_open()
                 if (returned_curtain_arr[1] == 0x01):
-                    self.curtain_open = False
-                elif (returned_curtain_arr[1] == 0x00):
                     self.curtain_open = True
+                elif (returned_curtain_arr[1] == 0x00):
+                    self.curtain_open = False
                 else:
                     print(f"error (curtain state) - byte recivied: {returned_curtain_arr[1]}")
 
@@ -216,6 +216,7 @@ class GUI:
                 print(f"Fejl ved hentning af realtidsdata: {error}")
 
         self.home_page.refresh_realtime_data()
+        self.settings_page.enable_buttons(self.settings_page.manual_buttons)
         self.root.after(5000, self.update_sensor_values)
 
     def run(self):
