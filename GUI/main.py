@@ -29,7 +29,6 @@ class GUI:
         self.manual = False
         self.window_open = False
         self.curtain_open = False
-        # CO2-valg
         self.co2_values = {
             "Ureguleret": 50,
             "Lav": 200,
@@ -52,7 +51,6 @@ class GUI:
         self.show_home()
         self.update_sensor_values()
 
-    # Fælles metode til at skifte mellem manuel og automatisk styring.
     def set_manual_mode(self, is_manual):
         if self.manual != is_manual and self.client is not None:
             # Sender 1 når automatisk styring er tændt og 0 når den er slukket.
@@ -61,11 +59,10 @@ class GUI:
         self.manual = is_manual
         self.home_page.refresh_control_mode()
 
-    # Tilføjet knapfunktion til forsiden, så automatisk styring kan startes/stoppes manuelt.
+    # toggle til knap på forside
     def toggle_automatic_control(self):
         self.set_manual_mode(not self.manual)
 
-    #Vindue og gardin åben luk metoder
     def open_window(self):
         if self.window_open:
             print("Vinduet er allerede åbent")
@@ -106,7 +103,7 @@ class GUI:
             self.client.set_curtain_state(False)
             self.curtain_open = False
 
-    # Tilføjet metode til at sende ønsket temperatur og CO2 via CMD_SET_DESIRED_VALUES.
+    # send ønsket temperatur og CO2 via CMD_SET_DESIRED_VALUES.
     def save_desired_values(self, temp_text, co2_level):
         if self.client is None:
             print("Error: Ikke forbundet til nogen port")
@@ -188,20 +185,20 @@ class GUI:
                 light = self._parse_sensor_response(self.client.get_light(), self.LIGHT_ID)
 
                 returned_window_arr = self.client.get_window_open()
-                if (returned_window_arr[1] == 0x01):
+                if returned_window_arr[1] == 0x01:
                     self.window_open = True
-                elif (returned_window_arr[1] == 0x00):
+                elif returned_window_arr[1] == 0x00:
                     self.window_open = False
                 else:
                     print(f"error (window state) - byte recivied: {returned_window_arr[1]}")
 
                 returned_curtain_arr = self.client.get_curtain_open()
-                if (returned_curtain_arr[1] == 0x01):
+                if returned_curtain_arr[1] == 0x01:
                     self.curtain_open = True
-                elif (returned_curtain_arr[1] == 0x00):
+                elif returned_curtain_arr[1] == 0x00:
                     self.curtain_open = False
                 else:
-                    print(f"error (curtain state) - byte recivied: {returned_curtain_arr[1]}")
+                    print(f"Error: (curtain state) - byte recivied: {returned_curtain_arr[1]}")
 
                 if room_temp is not None:
                     self.room_temp = room_temp
