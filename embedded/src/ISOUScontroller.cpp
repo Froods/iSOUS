@@ -15,35 +15,26 @@ void ISOUSController::init() {
     _delay_ms(2500);                          // let SCD30 produce first sample
     TSL2561_Status ts = TSL2561_.begin();
 }
+
 void ISOUSController::update() {
-    syncSensorData();
-    if (settings_.isManual()) {
-        applyManualTargets();
-    } else {
-        evaluateWindow();
-        evaluateCurtain();
-    }
+    if (!mockMode_) syncSensorData();   // springes over i test
+    if (settings_.isManual()) applyManualTargets();
+    else { evaluateWindow(); evaluateCurtain(); }
 }
 
 void ISOUSController::syncSensorData() {
-    // Same order as the working bring-up: TSL → LM → SCD
-    if (TSL2561_.readData() == TSL2561_OK) {
-        settings_.setLight(TSL2561_.getLux());
-    } 
-
-    if (LM75_.readData() == LM75_OK) {
-        settings_.setOutTemp(static_cast<int>(LM75_.getTempC()));
-    } 
-    if (SCD30_.readData() == SCD30_OK) {
-        settings_.setRoomTemp(static_cast<int>(SCD30_.getTemperature()));
-        settings_.setActualCO2(static_cast<int>(SCD30_.getCO2()));
-    } 
+     if (SCD30_.readData() == SCD30_OK) {
+    settings_.setRoomTemp(static_cast<int>(SCD30_.getTemperature()));
+    settings_.setActualCO2(static_cast<int>(SCD30_.getCO2()));
+    mockCO2ppm_ = static_cast<int>(SCD30_.getCO2());   // <-- ny
+}
 }
 
 void ISOUSController::evaluateWindow() {
-    int actualInTemp  = static_cast<int>(SCD30_.getTemperature());
-    int actualOutTemp = static_cast<int>(LM75_.getTempC());
-    int actualCO2     = static_cast<int>(SCD30_.getCO2());
+    int actualInTemp  = settings_.getRoomTemp();
+    int actualOutTemp = settings_.getOutTemp();
+    int actualCO2 = mockCO2ppm_;
+    
 
     int targetTemp        = settings_.getTargetTemp();
     CO2Setting targetCO2  = settings_.getCO2Setting();
@@ -102,8 +93,8 @@ void ISOUSController::evaluateWindow() {
 }
 
 void ISOUSController::evaluateCurtain() {
-    int actualInTemp = static_cast<int>(SCD30_.getTemperature());
-    int actualLight  = static_cast<int>(TSL2561_.getLux());
+    int actualInTemp = settings_.getRoomTemp();
+    int actualLight  = static_cast<int>(settings_.getLight());
     int targetTemp   = settings_.getTargetTemp();
 
     // Tærskel for "solen skinner" – juster efter test (krav siger ikke en specifik værdi)
@@ -126,6 +117,7 @@ void ISOUSController::evaluateCurtain() {
             curtain_.rollOutCurtain();
             settings_.setCurtainTargetState(false);
             }
+    }
     else if (tooCold && sunShining) {
             // Luk solens varme ind
             if (curtain_.getIsOut()){
@@ -145,7 +137,7 @@ void ISOUSController::evaluateCurtain() {
     }
     // tooHot && !sunShining: ingen sol at blokere – ingen handling
     }
-}
+
 
 
 

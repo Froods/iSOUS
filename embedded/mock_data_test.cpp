@@ -29,11 +29,9 @@ static void runScenario(int num, ISOUSController& ctrl, UserSettings& s,
 
     // Lad controlleren beslutte
     ctrl.update();
-    _delay_ms(10000); //vent på første regulering
-    ctrl.update();
 
     // Vent saa motorerne fysisk faar tid til at koere
-    _delay_ms(30000);
+    _delay_ms(3000);
 
     printResult(num, s);
 }

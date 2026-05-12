@@ -18,6 +18,9 @@ private:
     UserSettings& settings_;   // shared ifølge UML
     WindowMotor window_;
     CurtainMotor curtain_;
+    bool mockMode_ = false;
+    int mockCO2ppm_ = 0;
+
 
 	int n = 11;
     
@@ -28,6 +31,8 @@ private:
 
 public:
     ISOUSController(I2C &i2c, UserSettings &s);
+    void setMockMode(bool on) {mockMode_ = on;}
+    void setMockCO2ppm(int ppm) { mockCO2ppm_ = ppm; }
 
     void init();
     void update();
