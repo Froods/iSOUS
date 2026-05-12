@@ -1,4 +1,6 @@
 import tkinter as tk
+from datetime import datetime, timedelta
+from pathlib import Path
 
 from client import Client
 from pages import HomePage, SettingsPage
@@ -14,6 +16,7 @@ class GUI:
     STOPBYTE = 0xFF
     WINDOW_STATE_ID = 0x05
     CURTAIN_STATE_ID = 0x06
+    LOG_INTERVAL_HOURS = 48
 
     # GUI'en initialiserer alle realtime-attributter, som forsiden bruger.
     def __init__(self, port="COM4", baudrate=9600, timeout=5):
@@ -29,6 +32,7 @@ class GUI:
         self.manual = False
         self.window_open = False
         self.curtain_open = False
+        self.log_path = Path(__file__).resolve().parent.parent / "isous.log"
         self.co2_values = {
             "Ureguleret": 0,
             "Lav": 1,
@@ -174,6 +178,42 @@ class GUI:
 
         return payload[0]
 
+    def _log_realtime_data(self):
+        now = datetime.now()
+        line = (
+            f"{now:%Y-%m-%d %H:%M:%S} -- "
+            f"room_temp={self.room_temp}, "
+            f"temp_outside={self.temp_outside}, "
+            f"room_co2={self.room_co2}, "
+            f"light={self.light}, "
+            f"manual={self.manual}, "
+            f"window_open={self.window_open}, "
+            f"curtain_open={self.curtain_open}\n"
+        )
+
+        with self.log_path.open("a", encoding="utf-8") as log_file:
+            log_file.write(line)
+
+        self._remove_old_log_lines(now)
+
+    def _remove_old_log_lines(self, now):
+        oldest_allowed = now - timedelta(hours=self.LOG_INTERVAL_HOURS)
+        kept_lines = []
+
+        with self.log_path.open("r", encoding="utf-8") as log_file:
+            for line in log_file:
+                try:
+                    line_time = datetime.strptime(line[:19], "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    kept_lines.append(line)
+                    continue
+
+                if line_time >= oldest_allowed:
+                    kept_lines.append(line)
+
+        with self.log_path.open("w", encoding="utf-8") as log_file:
+            log_file.writelines(kept_lines)
+
     # update_sensor_values samler sensordata via de oprindelige client-metoder.
     def update_sensor_values(self):
         if self.client is not None:
@@ -213,6 +253,7 @@ class GUI:
 
         self.home_page.refresh_realtime_data()
         self.settings_page.enable_buttons(self.settings_page.manual_buttons)
+        self._log_realtime_data()
         self.root.after(5000, self.update_sensor_values)
 
     def run(self):
