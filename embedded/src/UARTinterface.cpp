@@ -65,7 +65,7 @@ void UARTinterface::parseCommand() {
 	switch(cmd) {
 		case CMD_SET_DESIRED_VALUES: {
 
-			settings_.setTargetTemp(static_cast<int>(par1));
+			if(par1 != 255) settings_.setTargetTemp(static_cast<int>(par1));
 			settings_.setCO2Setting(static_cast<int>(par2));
 
 			break;

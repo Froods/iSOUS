@@ -230,8 +230,8 @@ class Client:
     def __send_command_UART(self, cmd, par1, par2):
         # Pak data i respektive bytes
         packet = self.__pack_values(cmd=cmd, par1=par1, par2=par2)
-        print("Packet sent: \n",packet)
-        print("\n")
         # Send data
         self.ser.write(packet)
+        print("Packet sent: \n",packet.hex(' '))
+        print("\n")
         self.ser.flush()
