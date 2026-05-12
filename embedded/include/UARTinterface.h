@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "UserSettings.h"
+#include "CO2Setting.h"
 
 class UARTinterface {
 public:

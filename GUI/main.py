@@ -30,10 +30,10 @@ class GUI:
         self.window_open = False
         self.curtain_open = False
         self.co2_values = {
-            "Ureguleret": 50,
-            "Lav": 200,
-            "Mellem": 400,
-            "Høj": 600,
+            "Ureguleret": 0,
+            "Lav": 1,
+            "Mellem": 2,
+            "Høj": 3,
         }
 
         container = tk.Frame(self.root)
@@ -112,11 +112,10 @@ class GUI:
         try:
             temp_value = int(float(temp_text))
         except ValueError:
-            print("Fejl: Ønsket temperatur skal være et tal")
-            return
+            temp_value = 255
 
         # Validerer at ønsket temperatur ligger i det tilladte interval.
-        if temp_value < 0 or temp_value > 40:
+        if temp_value < 0 or (temp_value > 40 and temp_value != 255):
             print("Fejl: Ugyldigt valg. Temperaturen skal være mellem 0 og 40")
             return
 
