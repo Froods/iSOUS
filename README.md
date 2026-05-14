@@ -36,13 +36,6 @@ conda activate isous
 pip install -r requirements.txt
 ```
 
-Installere dependencies:
-
-```bash
-conda activate PRJ2
-pip install -r requirements.txt
-```
-
 ## Kør GUI
 
 GUI'en startes med:
