@@ -31,3 +31,11 @@
 2026-05-12 16:25:52 -- room_temp=None, temp_outside=None, room_co2=None, light=None, manual=False, window_open=False, curtain_open=False
 2026-05-12 16:25:57 -- room_temp=None, temp_outside=None, room_co2=None, light=None, manual=False, window_open=False, curtain_open=False
 2026-05-12 16:26:03 -- room_temp=None, temp_outside=None, room_co2=None, light=None, manual=False, window_open=False, curtain_open=False
+2026-05-14 11:02:26 -- room_temp=None, temp_outside=None, room_co2=None, light=None, manual=False, window_open=False, curtain_open=False
+2026-05-14 11:02:43 -- room_temp=26, temp_outside=22, room_co2=1, light=385, manual=False, window_open=True, curtain_open=True
+2026-05-14 11:03:00 -- room_temp=26, temp_outside=22, room_co2=1, light=393, manual=False, window_open=True, curtain_open=True
+2026-05-14 11:03:19 -- room_temp=26, temp_outside=22, room_co2=1, light=393, manual=False, window_open=True, curtain_open=True
+2026-05-14 11:03:35 -- room_temp=26, temp_outside=22, room_co2=1, light=452, manual=False, window_open=False, curtain_open=True
+2026-05-14 11:03:52 -- room_temp=26, temp_outside=22, room_co2=1, light=484, manual=False, window_open=False, curtain_open=True
+2026-05-14 11:04:30 -- room_temp=None, temp_outside=None, room_co2=None, light=None, manual=False, window_open=False, curtain_open=False
+2026-05-14 11:04:47 -- room_temp=26, temp_outside=22, room_co2=1, light=653, manual=False, window_open=True, curtain_open=True

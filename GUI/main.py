@@ -148,10 +148,10 @@ class GUI:
 
     def load_logged_values(self):
         with open(".isous", "r") as f:
-            lines = f.readlines
+            lines = f.readlines()
         
-        temp = lines[0]
-        co2 = lines[1]
+        temp = lines[0].strip()
+        co2 = lines[1].strip()
 
         self.save_desired_values(temp_text=temp, co2_level=co2)
         print(f"loaded previous values into embedded system: \n temp: {temp} \n co2: {co2}")
