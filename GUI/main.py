@@ -53,6 +53,7 @@ class GUI:
 
         # Startside
         self.show_home()
+        self.load_logged_values()
         self.update_sensor_values()
 
     def set_manual_mode(self, is_manual):
@@ -130,9 +131,30 @@ class GUI:
             return
 
         self.client.send_desired_values(temp=temp_value, co2=co2_value)
+        self.log_target_values(temp=temp_value, co2=co2_value)
         # Når der gemmes ønskede værdier, genstartes automatisk styring.
         self.set_manual_mode(False)
         print(f"Sendte ønskede værdier: temperatur={temp_value}, co2={co2_value}")
+
+    def log_target_values(self, temp, co2):
+        with open(".isous", "r") as f:
+            lines = f.readlines()
+        
+        lines[0] = f"{temp}\n"
+        lines[1] = f"{co2}\n"
+
+        with open(".isous", "w") as f:
+            f.writelines(lines)
+
+    def load_logged_values(self):
+        with open(".isous", "r") as f:
+            lines = f.readlines
+        
+        temp = lines[0]
+        co2 = lines[1]
+
+        self.save_desired_values(temp_text=temp, co2_level=co2)
+        print(f"loaded previous values into embedded system: \n temp: {temp} \n co2: {co2}")
 
     # Oprettelse af client, så GUI'en stadig kan starte uden seriel forbindelse.
     def _create_client(self, port, baudrate, timeout):
