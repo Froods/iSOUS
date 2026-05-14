@@ -1,6 +1,7 @@
 .venv
 __pycache__/
 *.pyc
+.idea
 
 #Gitignore from platformio.ini project:
 .pio
