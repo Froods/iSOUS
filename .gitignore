@@ -1,6 +1,7 @@
 .venv
 __pycache__/
 *.pyc
+.idea
 
 #Gitignore from platformio.ini project:
 .pio
@@ -14,3 +15,6 @@ __pycache__/
 
 # Ignorer hele __pycache__ mappen (som ses i din GUI mappe)
 __pycache__/
+
+# Ignorer log
+*.log
