@@ -46,6 +46,16 @@ CMD_SET_CURTAIN_STATE = 0x07
 #   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
 CMD_TOGGLE_AUTO_MODE = 0x08
 
+# - 0x09: Læs window state
+#   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_GET_WINDOW_OPEN = 0x09
+
+# - 0x0A: Læs curtain state
+#   - Parameter 1: Intet parameter (PARAMETER_OMITTED)
+#   - Parameter 2: Intet parameter (PARAMETER_OMITTED)
+CMD_GET_CURTAIN_OPEN = 0x0A
+
 ###########################
 
 # Vi vil også sende en stop byte til sidst med værdien:
@@ -56,9 +66,8 @@ PARAMETER_OMITTED = 0x00
 
 ###########################
 
-# Vi vil også indstille en konstant størrelse af bytes til at blive modtaget fra arduinoen
-#  - Expected bytes
-EXPECTED_BYTES = 4
+# GUI sender stadig 4-byte kommandoer, men embedded svarer med 6-byte datapakker.
+EXPECTED_RESPONSE_BYTES = 6
 
 class Client:
     def __init__(self, port, baudrate, timeout):
@@ -85,12 +94,45 @@ class Client:
             print("Error: Ikke forbundet til nogen port")
 
     # --- Public methods ---
+    def get_window_open(self):
+        # Fjern alle garbage værdier i RX buffer
+        self.ser.reset_input_buffer()
+        # Send kommando
+        self.__send_command_UART(cmd=CMD_GET_WINDOW_OPEN, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        # Gem modtaget data i variabel
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
+
+        # Hvis respons er valid -> Returner
+        # Ellers -> Print fejl
+        if len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x05):
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+            print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+            return None
+
+    def get_curtain_open(self):
+        # Fjern alle garbage værdier i RX buffer
+        self.ser.reset_input_buffer()
+        # Send kommando
+        self.__send_command_UART(cmd=CMD_GET_CURTAIN_OPEN, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
+        # Gem modtaget data i variabel
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
+
+        # Hvis respons er valid -> Returner
+        # Ellers -> Print fejl
+        if len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x06):
+            print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
+            return response
+        else:
+            print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
+            return None
+				
     def send_desired_values(self, temp, co2):
         if self.ser.is_open:
             # Send kommando med data
             self.__send_command_UART(cmd=CMD_SET_DESIRED_VALUES, par1=temp, par2=co2)
         else:
-            # Ved fejl: informer udvikler
             print("Error: Ikke forbundet til nogen port")
 
     def get_room_temp(self):
@@ -99,11 +141,11 @@ class Client:
         # Send kommando
         self.__send_command_UART(cmd=CMD_GET_ROOM_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
         # Gem modtaget data i variabel
-        response = self.ser.read(EXPECTED_BYTES)
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
 
         # Hvis respons er valid -> Returner
         # Ellers -> Print fejl
-        if len(response) == EXPECTED_BYTES:
+        if len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x01):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -116,11 +158,11 @@ class Client:
         # Send kommando
         self.__send_command_UART(cmd=CMD_GET_ROOM_CO2, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
         # Gem modtaget data i variabel
-        response = self.ser.read(EXPECTED_BYTES)
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
 
         # Hvis respons er valid -> Returner
         # Ellers -> Print fejl
-        if len(response) == EXPECTED_BYTES:
+        if len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x02):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -130,9 +172,9 @@ class Client:
     def get_outside_temp(self):
         self.ser.reset_input_buffer()
         self.__send_command_UART(cmd=CMD_GET_OUTSIDE_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
-        response = self.ser.read(EXPECTED_BYTES)
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
 
-        if len(response) == EXPECTED_BYTES:
+        if len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x03):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -142,8 +184,8 @@ class Client:
     def get_light(self):
         self.ser.reset_input_buffer()
         self.__send_command_UART(cmd=CMD_GET_LIGHT, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
-        response = self.ser.read(EXPECTED_BYTES)
-        if len(response) == EXPECTED_BYTES:
+        response = self.ser.read(EXPECTED_RESPONSE_BYTES)
+        if len(response) == EXPECTED_RESPONSE_BYTES and (response[0] == 0x04):
             print(f"Byte modtaget gennem UART: \n{response.hex(' ')}")
             return response
         else:
@@ -164,13 +206,12 @@ class Client:
         else:
             print("Error: Ikke forbundet til nogen port")
 
-    def toggle_auto_mode(self, is_auto):
+    def  toggle_auto_mode(self, is_auto):
         if self.ser.is_open:
             par1 = 1 if is_auto else 0
             self.__send_command_UART(cmd=CMD_TOGGLE_AUTO_MODE, par1=par1, par2=PARAMETER_OMITTED)
         else:
             print("Error: Ikke forbundet til nogen port")
-
 
     # --- Private methods ---
 
@@ -186,7 +227,8 @@ class Client:
     def __send_command_UART(self, cmd, par1, par2):
         # Pak data i respektive bytes
         packet = self.__pack_values(cmd=cmd, par1=par1, par2=par2)
-
         # Send data
         self.ser.write(packet)
+        print("Packet sent: \n",packet.hex(' '))
+        print("\n")
         self.ser.flush()

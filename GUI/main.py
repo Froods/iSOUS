@@ -1,4 +1,6 @@
 import tkinter as tk
+from datetime import datetime, timedelta
+from pathlib import Path
 
 from client import Client
 from pages import HomePage, SettingsPage
@@ -6,8 +8,18 @@ from pages import HomePage, SettingsPage
 
 # self er objektet som man arbejder på
 class GUI:
+    # Svar-ID'er matcher embedded UARTinterface.h.
+    ROOM_TEMP_ID = 0x01
+    ROOM_CO2_ID = 0x02
+    OUTSIDE_TEMP_ID = 0x03
+    LIGHT_ID = 0x04
+    STOPBYTE = 0xFF
+    WINDOW_STATE_ID = 0x05
+    CURTAIN_STATE_ID = 0x06
+    LOG_INTERVAL_HOURS = 48
+
     # GUI'en initialiserer alle realtime-attributter, som forsiden bruger.
-    def __init__(self, port="COM3", baudrate=9600, timeout=1):
+    def __init__(self, port="COM4", baudrate=9600, timeout=5):
         self.root = tk.Tk()
         self.root.geometry("640x360")
         self.root.title("iSOUS")
@@ -20,12 +32,12 @@ class GUI:
         self.manual = False
         self.window_open = False
         self.curtain_open = False
-        # CO2-valg
+        self.log_path = Path(__file__).resolve().parent.parent / "isous.log"
         self.co2_values = {
-            "Ureguleret": 50,
-            "Lav": 200,
-            "Mellem": 400,
-            "Høj": 600,
+            "Ureguleret": 0,
+            "Lav": 1,
+            "Mellem": 2,
+            "Høj": 3,
         }
 
         container = tk.Frame(self.root)
@@ -41,9 +53,9 @@ class GUI:
 
         # Startside
         self.show_home()
+        self.load_logged_values()
         self.update_sensor_values()
 
-    # Fælles metode til at skifte mellem manuel og automatisk styring.
     def set_manual_mode(self, is_manual):
         if self.manual != is_manual and self.client is not None:
             # Sender 1 når automatisk styring er tændt og 0 når den er slukket.
@@ -52,11 +64,10 @@ class GUI:
         self.manual = is_manual
         self.home_page.refresh_control_mode()
 
-    # Tilføjet knapfunktion til forsiden, så automatisk styring kan startes/stoppes manuelt.
+    # toggle til knap på forside
     def toggle_automatic_control(self):
         self.set_manual_mode(not self.manual)
 
-    #Vindue og gardin åben luk metoder
     def open_window(self):
         if self.window_open:
             print("Vinduet er allerede åbent")
@@ -97,7 +108,7 @@ class GUI:
             self.client.set_curtain_state(False)
             self.curtain_open = False
 
-    # Tilføjet metode til at sende ønsket temperatur og CO2 via CMD_SET_DESIRED_VALUES.
+    # send ønsket temperatur og CO2 via CMD_SET_DESIRED_VALUES.
     def save_desired_values(self, temp_text, co2_level):
         if self.client is None:
             print("Error: Ikke forbundet til nogen port")
@@ -106,11 +117,10 @@ class GUI:
         try:
             temp_value = int(float(temp_text))
         except ValueError:
-            print("Fejl: Ønsket temperatur skal være et tal")
-            return
+            temp_value = 255
 
         # Validerer at ønsket temperatur ligger i det tilladte interval.
-        if temp_value < 0 or temp_value > 40:
+        if temp_value < 0 or (temp_value > 40 and temp_value != 255):
             print("Fejl: Ugyldigt valg. Temperaturen skal være mellem 0 og 40")
             return
 
@@ -121,9 +131,30 @@ class GUI:
             return
 
         self.client.send_desired_values(temp=temp_value, co2=co2_value)
+        self.log_target_values(temp=temp_value, co2=co2_value)
         # Når der gemmes ønskede værdier, genstartes automatisk styring.
         self.set_manual_mode(False)
         print(f"Sendte ønskede værdier: temperatur={temp_value}, co2={co2_value}")
+
+    def log_target_values(self, temp, co2):
+        with open(".isous", "r") as f:
+            lines = f.readlines()
+        
+        lines[0] = f"{temp}\n"
+        lines[1] = f"{co2}\n"
+
+        with open(".isous", "w") as f:
+            f.writelines(lines)
+
+    def load_logged_values(self):
+        with open(".isous", "r") as f:
+            lines = f.readlines()
+        
+        temp = lines[0].strip()
+        co2 = lines[1].strip()
+
+        self.save_desired_values(temp_text=temp, co2_level=co2)
+        print(f"loaded previous values into embedded system: \n temp: {temp} \n co2: {co2}")
 
     # Oprettelse af client, så GUI'en stadig kan starte uden seriel forbindelse.
     def _create_client(self, port, baudrate, timeout):
@@ -146,27 +177,89 @@ class GUI:
         self.settings_page.gardin_ned.config(state=tk.NORMAL if self.curtain_open else tk.DISABLED)
         self.settings_page.show()
 
-    # GUI'en parser rå sensor-bytes, så client.py kan blive i sin oprindelige form.
-    def _parse_sensor_response(self, response):
+    # Parser 6-byte svar fra embedded.
+    def _parse_sensor_response(self, response, expected_type):
         if response is None:
             return None
-    # er alle disse if's nødvendige?
-        if len(response) != 4:
+
+        if len(response) != 6:
             return None
 
-        if response[-1] == 0xFF:
-            return int.from_bytes(response[1:3], byteorder="big")
+        response_type = response[0]
+        payload = response[1:5]
+        stopbyte = response[5]
 
-        return int.from_bytes(response, byteorder="big")
+        if stopbyte != self.STOPBYTE:
+            return None
+
+        if response_type != expected_type:
+            return None
+
+        if response_type == self.LIGHT_ID:
+            return int.from_bytes(payload, byteorder="big")
+
+        return payload[0]
+
+    def _log_realtime_data(self):
+        now = datetime.now()
+        line = (
+            f"{now:%Y-%m-%d %H:%M:%S} -- "
+            f"room_temp={self.room_temp}, "
+            f"temp_outside={self.temp_outside}, "
+            f"room_co2={self.room_co2}, "
+            f"light={self.light}, "
+            f"manual={self.manual}, "
+            f"window_open={self.window_open}, "
+            f"curtain_open={self.curtain_open}\n"
+        )
+
+        with self.log_path.open("a", encoding="utf-8") as log_file:
+            log_file.write(line)
+
+        self._remove_old_log_lines(now)
+
+    def _remove_old_log_lines(self, now):
+        oldest_allowed = now - timedelta(hours=self.LOG_INTERVAL_HOURS)
+        kept_lines = []
+
+        with self.log_path.open("r", encoding="utf-8") as log_file:
+            for line in log_file:
+                try:
+                    line_time = datetime.strptime(line[:19], "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    kept_lines.append(line)
+                    continue
+
+                if line_time >= oldest_allowed:
+                    kept_lines.append(line)
+
+        with self.log_path.open("w", encoding="utf-8") as log_file:
+            log_file.writelines(kept_lines)
 
     # update_sensor_values samler sensordata via de oprindelige client-metoder.
     def update_sensor_values(self):
         if self.client is not None:
             try:
-                room_temp = self._parse_sensor_response(self.client.get_room_temp())
-                room_co2 = self._parse_sensor_response(self.client.get_room_co2())
-                outside_temp=self._parse_sensor_response(self.client.get_outside_temp())
-                light = self._parse_sensor_response(self.client.get_light())
+                room_temp = self._parse_sensor_response(self.client.get_room_temp(), self.ROOM_TEMP_ID)
+                room_co2 = self._parse_sensor_response(self.client.get_room_co2(), self.ROOM_CO2_ID)
+                outside_temp = self._parse_sensor_response(self.client.get_outside_temp(), self.OUTSIDE_TEMP_ID)
+                light = self._parse_sensor_response(self.client.get_light(), self.LIGHT_ID)
+
+                returned_window_arr = self.client.get_window_open()
+                if returned_window_arr[1] == 0x01:
+                    self.window_open = True
+                elif returned_window_arr[1] == 0x00:
+                    self.window_open = False
+                else:
+                    print(f"error (window state) - byte recivied: {returned_window_arr[1]}")
+
+                returned_curtain_arr = self.client.get_curtain_open()
+                if returned_curtain_arr[1] == 0x01:
+                    self.curtain_open = True
+                elif returned_curtain_arr[1] == 0x00:
+                    self.curtain_open = False
+                else:
+                    print(f"Error: (curtain state) - byte recivied: {returned_curtain_arr[1]}")
 
                 if room_temp is not None:
                     self.room_temp = room_temp
@@ -181,6 +274,8 @@ class GUI:
                 print(f"Fejl ved hentning af realtidsdata: {error}")
 
         self.home_page.refresh_realtime_data()
+        self.settings_page.enable_buttons(self.settings_page.manual_buttons)
+        self._log_realtime_data()
         self.root.after(5000, self.update_sensor_values)
 
     def run(self):
