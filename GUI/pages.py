@@ -135,7 +135,6 @@ class SettingsPage(Page):
         vindue_row = tk.Frame(side_controls)
         vindue_row.pack(side="left")
 
-        # Gemmer knapperne som attributter, så de kan disables samlet i 10 sekunder.
         self.gardin_op = tk.Button(
             gardin_row,
             text="Op",
