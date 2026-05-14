@@ -32,7 +32,9 @@ class GUI:
         self.manual = False
         self.window_open = False
         self.curtain_open = False
-        self.log_path = Path(__file__).resolve().parent.parent / "isous.log"
+        self.log_path = Path(__file__).resolve().parent.parent / "logs" / "isous.log"
+        self.log_path.parent.mkdir(parents=True, exist_ok=True)
+
         self.co2_values = {
             "Ureguleret": 0,
             "Lav": 1,
