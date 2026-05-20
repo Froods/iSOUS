@@ -5,20 +5,32 @@ from pathlib import Path
 from client import Client
 from pages import HomePage, SettingsPage
 
+## @package main
+# Hovedmodul for iSOUS GUI.
+#
+# Forbinder tkinter-siderne med UART-klienten og holder styr på data for
+# sensor og states af vindue og gardin, som brugerfladen viser.
 
-# self er objektet som man arbejder på
+## GUI-sider, UART-kommunikation, tilstandsopdatering og logging.
+#
+# GUI ejer tkinter-hovedvinduet, opretter sideobjekterne, kommunikerer med
+# embedded-controlleren gennem Client.py og opdaterer realtidsdata.
 class GUI:
-    # Svar-ID'er matcher embedded UARTinterface.h.
+    # Svar-ID'er matcher embedded UARTinterface
+    STOPBYTE = 0xFF
     ROOM_TEMP_ID = 0x01
     ROOM_CO2_ID = 0x02
     OUTSIDE_TEMP_ID = 0x03
     LIGHT_ID = 0x04
-    STOPBYTE = 0xFF
     WINDOW_STATE_ID = 0x05
     CURTAIN_STATE_ID = 0x06
     LOG_INTERVAL_HOURS = 48
 
-    # GUI'en initialiserer alle realtime-attributter, som forsiden bruger.
+    ## Initialiserer tkinter-vinduet, UART-klienten, siderne og gemt tilstand.
+    #
+    # @param port Seriel port for embedded UART-forbindelse.
+    # @param baudrate UART baudrate.
+    # @param timeout Timeout for seriel læsning i sek.
     def __init__(self, port="COM4", baudrate=9600, timeout=5):
         self.root = tk.Tk()
         self.root.geometry("640x360")
@@ -51,11 +63,14 @@ class GUI:
         self.home_page.frame.grid(row=0, column=0, sticky="nsew")
         self.settings_page.frame.grid(row=0, column=0, sticky="nsew")
 
-        # Startside
+        # Opstart
         self.show_home()
         self.load_logged_values()
         self.update_sensor_values()
 
+    ## Slår manuel tilstand til eller fra og giver embedded-controlleren besked.
+    #
+    # @param is_manual True når manuel styring skal være aktiv.
     def set_manual_mode(self, is_manual):
         if self.manual != is_manual and self.client is not None:
             # Sender 1 når automatisk styring er tændt og 0 når den er slukket.
@@ -64,10 +79,11 @@ class GUI:
         self.manual = is_manual
         self.home_page.refresh_control_mode()
 
-    # toggle til knap på forside
+    ## Skifter automatisk styring fra knappen på forsiden.
     def toggle_automatic_control(self):
         self.set_manual_mode(not self.manual)
 
+    ## Åbner vinduet gennem embedded-controlleren.
     def open_window(self):
         if self.window_open:
             print("Vinduet er allerede åbent")
@@ -78,6 +94,7 @@ class GUI:
             self.client.set_window_state(True)
             self.window_open = True
 
+    ## Lukker vinduet gennem embedded-controlleren.
     def close_window(self):
         if not self.window_open:
             print("Vinduet er allerede lukket")
@@ -88,6 +105,7 @@ class GUI:
             self.client.set_window_state(False)
             self.window_open = False
 
+    ## Åbner gardinet gennem embedded-controlleren.
     def open_curtain(self):
         if self.curtain_open:
             print("Gardinet er allerede åbent")
@@ -98,6 +116,7 @@ class GUI:
             self.client.set_curtain_state(True)
             self.curtain_open = True
 
+    ## Lukker gardinet gennem embedded-controlleren.
     def close_curtain(self):
         if not self.curtain_open:
             print("Gardinet er allerede lukket")
@@ -108,7 +127,13 @@ class GUI:
             self.client.set_curtain_state(False)
             self.curtain_open = False
 
-    # send ønsket temperatur og CO2 via CMD_SET_DESIRED_VALUES.
+    ## Validerer og sender ønsket temperatur og CO2-indstilling.
+    #
+    # Sender de ønskede værdier via CMD_SET_DESIRED_VALUES, logger de valgte
+    # mål-værdier og sætter systemet til automatisk styring efter gem.
+    #
+    # @param temp_text Temperatur fra tekstfeltet.
+    # @param co2_level CO2 niveau valgt.
     def save_desired_values(self, temp_text, co2_level):
         if self.client is None:
             print("Error: Ikke forbundet til nogen port")
@@ -120,11 +145,11 @@ class GUI:
             temp_value = 255
 
         # Validerer at ønsket temperatur ligger i det tilladte interval.
-        if temp_value < 0 or (temp_value > 40 and temp_value != 255):
+        if temp_value < 10 or (temp_value > 30 and temp_value != 255):
             print("Fejl: Ugyldigt valg. Temperaturen skal være mellem 0 og 40")
             return
 
-        # Bruger den fælles CO2-mapping, så værdierne kun skal ændres et sted.
+        # CO2 værdierne kun skal ændres et sted, TJEK LIGE OP ..........................................................
         co2_value = self.co2_values.get(co2_level)
         if co2_value is None:
             print("Fejl: Ugyldigt CO2-niveau")
@@ -136,6 +161,10 @@ class GUI:
         self.set_manual_mode(False)
         print(f"Sendte ønskede værdier: temperatur={temp_value}, co2={co2_value}")
 
+    ## Gemmer de seneste ønskede mål-værdier i den lokale .isous-fil.
+    #
+    # @param temp Ønsket temperaturværdi.
+    # @param co2 Ønsket CO2-niveau.
     def log_target_values(self, temp, co2):
         with open(".isous", "r") as f:
             lines = f.readlines()
@@ -146,6 +175,7 @@ class GUI:
         with open(".isous", "w") as f:
             f.writelines(lines)
 
+    ## Indlæser tidligere gemte mål-værdier og sender dem til embedded.
     def load_logged_values(self):
         with open(".isous", "r") as f:
             lines = f.readlines()
@@ -156,7 +186,12 @@ class GUI:
         self.save_desired_values(temp_text=temp, co2_level=co2)
         print(f"loaded previous values into embedded system: \n temp: {temp} \n co2: {co2}")
 
-    # Oprettelse af client, så GUI'en stadig kan starte uden seriel forbindelse.
+    ## Opretter UART-klienten og lader GUI'en starte uden hardware.
+    #
+    # @param port Seriel port for embedded UART-forbindelse.
+    # @param baudrate UART baudrate.
+    # @param timeout Timeout for seriel læsning i sek.
+    # @return Client-instans hvis forbindelsen lykkes, ellers None.
     def _create_client(self, port, baudrate, timeout):
         try:
             return Client(port=port, baudrate=baudrate, timeout=timeout)
@@ -164,20 +199,25 @@ class GUI:
             print(f"Kunne ikke oprette serial client: {error}")
             return None
 
-    # show_home opdaterer forsiden med de nyeste gemte attributter for alle realtime-felter.
+    ## Viser forsiden efter opdatering af realtidsværdier og styringstilstand.
     def show_home(self):
         self.home_page.refresh_realtime_data()
         self.home_page.refresh_control_mode()
-        self.home_page.show()
+        self.home_page.frame.tkraise()
 
+    ## Viser indstillingssiden og opdaterer knapper til manuel styring.
     def show_settings(self):
         self.settings_page.vindue_op.config(state=tk.DISABLED if self.window_open else tk.NORMAL)
         self.settings_page.vindue_ned.config(state=tk.NORMAL if self.window_open else tk.DISABLED)
         self.settings_page.gardin_op.config(state=tk.DISABLED if self.curtain_open else tk.NORMAL)
         self.settings_page.gardin_ned.config(state=tk.NORMAL if self.curtain_open else tk.DISABLED)
-        self.settings_page.show()
+        self.settings_page.frame.tkraise()
 
-    # Parser 6-byte svar fra embedded.
+    ## Parser et 6-byte sensorsvar fra embedded-controlleren.
+    #
+    # @param response UART-svarbytes.
+    # @param expected_type Forventet svartype-byte.
+    # @return Parset sensorværdi eller None hvis svaret er ugyldigt.
     def _parse_sensor_response(self, response, expected_type):
         if response is None:
             return None
@@ -200,6 +240,7 @@ class GUI:
 
         return payload[0]
 
+    ## Tilføjer de seneste realtidsdata til logfilen og sletter de gamle linjer.
     def _log_realtime_data(self):
         now = datetime.now()
         line = (
@@ -218,6 +259,9 @@ class GUI:
 
         self._remove_old_log_lines(now)
 
+    ## Fjerner gamle log linjer der er ældre end LOG_INTERVAL_HOURS.
+    #
+    # @param now Aktuelt tidspunkt brugt som reference for oprydning.
     def _remove_old_log_lines(self, now):
         oldest_allowed = now - timedelta(hours=self.LOG_INTERVAL_HOURS)
         kept_lines = []
@@ -236,7 +280,9 @@ class GUI:
         with self.log_path.open("w", encoding="utf-8") as log_file:
             log_file.writelines(kept_lines)
 
-    # update_sensor_values samler sensordata via de oprindelige client-metoder.
+    ## Henter sensor og motor tilstand fra embedded og opdaterer GUI'en.
+    #
+    # Metoden planlægger selv næste kørsel med tkinter, og opdatere GUI'ens værdier.
     def update_sensor_values(self):
         if self.client is not None:
             try:
@@ -278,6 +324,7 @@ class GUI:
         self._log_realtime_data()
         self.root.after(5000, self.update_sensor_values)
 
+    ## Starter tkinter event-loopet.
     def run(self):
         self.root.mainloop()
 
