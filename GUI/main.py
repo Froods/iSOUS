@@ -31,7 +31,7 @@ class GUI:
         self.light = None
         self.manual = False
         self.window_open = False
-        self.curtain_open = False
+        self.curtain_open = True
         self.log_path = Path(__file__).resolve().parent.parent / "isous.log"
         self.co2_values = {
             "Ureguleret": 0,

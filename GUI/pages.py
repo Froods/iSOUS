@@ -70,7 +70,7 @@ class HomePage(Page):
         co2_value = "Lav" if self.app.room_co2 == 3 else "Normalt indeklima" if self.app.room_co2 == 2 else "Høj" if self.app.room_co2 == 1 else "Ureguleret"
         
 
-        co2_text = "--" if self.app.room_co2 is None else f"{co2_value} ppm"
+        co2_text = "--" if self.app.room_co2 is None else f"{co2_value}"
         light_text = "--" if self.app.light is None else f"{self.app.light} lux"
 
         # tkinter
