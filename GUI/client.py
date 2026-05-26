@@ -69,6 +69,14 @@ PARAMETER_OMITTED = 0x00
 # GUI sender stadig 4-byte kommandoer, men embedded svarer med 6-byte datapakker.
 EXPECTED_RESPONSE_BYTES = 6
 
+# Konstant ID'er til parser
+ROOM_TEMP_ID = 0x01
+ROOM_CO2_ID = 0x02
+OUTSIDE_TEMP_ID = 0x03
+LIGHT_ID = 0x04
+WINDOW_STATE_ID = 0x05
+CURTAIN_STATE_ID = 0x06
+
 class Client:
     def __init__(self, port, baudrate, timeout):
         # Initialiser attributter
@@ -212,6 +220,29 @@ class Client:
             self.__send_command_UART(cmd=CMD_TOGGLE_AUTO_MODE, par1=par1, par2=PARAMETER_OMITTED)
         else:
             print("Error: Ikke forbundet til nogen port")
+
+    # parser 6 byte svar fra embedded
+    def parse_sensor_response(self, response, expected_type):
+        if response is None:
+            return None
+
+        if len(response) != 6:
+            return None
+
+        response_type = response[0]
+        payload = response[1:5]
+        stopbyte = response[5]
+
+        if stopbyte != STOPBYTE:
+            return None
+
+        if response_type != expected_type:
+            return None
+
+        if response_type == LIGHT_ID:
+            return int.from_bytes(payload, byteorder="big")
+
+        return payload[0]
 
     # --- Private methods ---
 

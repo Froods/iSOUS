@@ -8,14 +8,14 @@ from pages import HomePage, SettingsPage
 
 # self er objektet som man arbejder på
 class GUI:
-    # Svar-ID'er matcher embedded UARTinterface.h.
+    # Svar ID'er matcher embedded UARTinterface.h.
     ROOM_TEMP_ID = 0x01
     ROOM_CO2_ID = 0x02
     OUTSIDE_TEMP_ID = 0x03
     LIGHT_ID = 0x04
-    STOPBYTE = 0xFF
     WINDOW_STATE_ID = 0x05
     CURTAIN_STATE_ID = 0x06
+    STOPBYTE = 0xFF
     LOG_INTERVAL_HOURS = 48
 
     # GUI'en initialiserer alle realtime-attributter, som forsiden bruger.
@@ -177,29 +177,6 @@ class GUI:
         self.settings_page.gardin_ned.config(state=tk.NORMAL if self.curtain_open else tk.DISABLED)
         self.settings_page.show()
 
-    # Parser 6-byte svar fra embedded.
-    def _parse_sensor_response(self, response, expected_type):
-        if response is None:
-            return None
-
-        if len(response) != 6:
-            return None
-
-        response_type = response[0]
-        payload = response[1:5]
-        stopbyte = response[5]
-
-        if stopbyte != self.STOPBYTE:
-            return None
-
-        if response_type != expected_type:
-            return None
-
-        if response_type == self.LIGHT_ID:
-            return int.from_bytes(payload, byteorder="big")
-
-        return payload[0]
-
     def _log_realtime_data(self):
         now = datetime.now()
         line = (
@@ -240,10 +217,10 @@ class GUI:
     def update_sensor_values(self):
         if self.client is not None:
             try:
-                room_temp = self._parse_sensor_response(self.client.get_room_temp(), self.ROOM_TEMP_ID)
-                room_co2 = self._parse_sensor_response(self.client.get_room_co2(), self.ROOM_CO2_ID)
-                outside_temp = self._parse_sensor_response(self.client.get_outside_temp(), self.OUTSIDE_TEMP_ID)
-                light = self._parse_sensor_response(self.client.get_light(), self.LIGHT_ID)
+                room_temp = self.client.parse_sensor_response(self.client.get_room_temp(), self.ROOM_TEMP_ID)
+                room_co2 = self.client.parse_sensor_response(self.client.get_room_co2(), self.ROOM_CO2_ID)
+                outside_temp = self.client.parse_sensor_response(self.client.get_outside_temp(), self.OUTSIDE_TEMP_ID)
+                light = self.client.parse_sensor_response(self.client.get_light(), self.LIGHT_ID)
 
                 returned_window_arr = self.client.get_window_open()
                 if returned_window_arr[1] == 0x01:
