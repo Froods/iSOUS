@@ -1,16 +1,25 @@
 import tkinter as tk
 
 
+## @package pages
+# tkinter-sideklasser brugt af GUI'en.
+
+## Klasse oprettelse GUI-sider, der kan vises i den fælles container.
 class Page:
+    ## Opretter en frame med en reference til hovedapplikationen.
+    #
+    # @param parent Overordnet tkinter-container.
+    # @param app GUI-controller.
     def __init__(self, parent, app):
         self.app = app
         self.frame = tk.Frame(parent, width=640, height=360)
 
-    def show(self):
-        self.frame.tkraise()
-
-
+## Forside der viser realtidsdata fra sensorer og status for automatisk styring.
 class HomePage(Page):
+    ## Bygger UI elementer til forsiden.
+    #
+    # @param parent Overordnet tkinter-container.
+    # @param app Hoved-GUI-controllerinstans.
     def __init__(self, parent, app):
         super().__init__(parent, app)
         title = tk.Label(self.frame, text="iSOUS", font=("Arial", 14, "bold"))
@@ -24,7 +33,7 @@ class HomePage(Page):
         realtime_panel = tk.LabelFrame(content_row, text="Realtidsdata")
         realtime_panel.pack(fill="x", anchor="n")
 
-        # Alle homepage-felter starter som dynamiske realtime-felter fra GUI-attributter.
+        # Alle realtime-felter fra GUI-attributter.
         self.temp_inside_var = tk.StringVar(value="Temperatur inde: --")
         self.temp_outside_var = tk.StringVar(value="Temperatur ude: --")
         self.co2_var = tk.StringVar(value="CO2 inde: --")
@@ -38,7 +47,6 @@ class HomePage(Page):
         # Knapper under realtime (centreret)
         knap_row = tk.Frame(content_row)
         knap_row.pack(fill="x", pady=(10, 0))
-
         knap_center = tk.Frame(knap_row)
         knap_center.pack()
 
@@ -51,7 +59,6 @@ class HomePage(Page):
         )
         settings_button.pack(side="left", padx=(0, 10))
 
-        # Gemmer reference til knappen, så dens tekst og farve kan opdateres ud fra manual-state.
         self.stopauto_button = tk.Button(
             knap_center,
             text="Stop Automatisk \n Styring",
@@ -63,13 +70,11 @@ class HomePage(Page):
         self.stopauto_button.pack(side="left")
         self.refresh_control_mode()
 
-    # HomePage opdaterer alle fire realtime-felter fra GUI-attributterne.
+    ## Opdaterer de realtidslabels fra værdier gemt i GUI-objektet.
     def refresh_realtime_data(self):
         temp_inside_text = "--" if self.app.room_temp is None else f"{self.app.room_temp} C"
         temp_outside_text = "--" if self.app.temp_outside is None else f"{self.app.temp_outside} C"
-        co2_value = "Lav" if self.app.room_co2 == 3 else "Normalt indeklima" if self.app.room_co2 == 2 else "Høj" if self.app.room_co2 == 1 else "Ureguleret"
-        
-
+        co2_value = "Lav" if self.app.room_co2 == 3 else "Normalt indeklima" if self.app.room_co2 == 2 else "Høj" if self.app.room_co2 == 1 else "Ureguleret"       
         co2_text = "--" if self.app.room_co2 is None else f"{co2_value}"
         light_text = "--" if self.app.light is None else f"{self.app.light} lux"
 
@@ -79,7 +84,7 @@ class HomePage(Page):
         self.co2_var.set(f"CO2 inde: {co2_text}")
         self.light_var.set(f"Lysintensitet: {light_text}")
 
-    # Opdaterer forsiden, så knappen viser om automatisk styring er aktiv eller stoppet.
+    ## Opdaterer tekst og farve på knappen til automatisk styring.
     def refresh_control_mode(self):
         if self.app.manual:
             self.stopauto_button.config(
@@ -93,11 +98,16 @@ class HomePage(Page):
             )
 
 
+## Indstillingsside til ønskede værdier og manuel styring af vindue/gardin.
 class SettingsPage(Page):
+    ## Bygger inputfelter og knapper.
+    #
+    # @param parent Overordnet tkinter-container.
+    # @param app GUI-controller.
     def __init__(self, parent, app):
         super().__init__(parent, app)
 
-        title = tk.Label(self.frame, text="Settings", font=("Arial", 14, "bold"))
+        title = tk.Label(self.frame, text="Indstillinger", font=("Arial", 14, "bold"))
         title.pack()
 
         # Hele siden
@@ -108,7 +118,7 @@ class SettingsPage(Page):
         change_panel = tk.LabelFrame(content_row, text="Indstil miljø")
         change_panel.pack(side="left", fill="both", expand=True, anchor="n")
 
-        # Midlertidig variabel til temperature input
+        # Temperaturinput
         self.wanted_temp = tk.StringVar(value="")
         tk.Label(change_panel, text="Ønsket temperatur (C):", anchor="w").pack(fill="x", padx=8, pady=(8, 2))
         tk.Entry(change_panel, textvariable=self.wanted_temp).pack(fill="x", padx=8, pady=(0, 8))
@@ -116,7 +126,6 @@ class SettingsPage(Page):
         # CO2 niveau med 4 bullets
         self.wanted_co2 = tk.StringVar(value="Lav")
         tk.Label(change_panel, text="CO2 niveau:", anchor="w").pack(fill="x", padx=8, pady=(2, 2))
-
         tk.Radiobutton(change_panel, text="Ureguleret", variable=self.wanted_co2, value="Ureguleret").pack(anchor="w", padx=12)
         tk.Radiobutton(change_panel, text="Lav", variable=self.wanted_co2, value="Lav").pack(anchor="w", padx=12)
         tk.Radiobutton(change_panel, text="Mellem", variable=self.wanted_co2, value="Mellem").pack(anchor="w", padx=12)
@@ -182,7 +191,8 @@ class SettingsPage(Page):
             self.vindue_op,
             self.vindue_ned,
         ]
-        self.enable_buttons(self.manual_buttons)
+
+        self.enable_buttons()
 
         knap_row = tk.Frame(change_panel)
         knap_row.pack(fill="x", padx=8, pady=(4, 8))
@@ -203,40 +213,45 @@ class SettingsPage(Page):
         )
         save_button.pack(side="right")
 
-    # læser settings-felterne og sender dem videre til GUI-logikken.
+    ## Læser felterne for ønskede indstillinger og sender dem til GUI-klassen.
     def save_settings(self):
         self.app.save_desired_values(
             temp_text=self.wanted_temp.get(),
             co2_level=self.wanted_co2.get(),
         )
 
-    # Hjælpefunktion til at disable en gruppe knapper i 10 sekunder.
+    ## Deaktiverer en gruppe knapper 10 sek efter manuel styring.
+    #
+    # @param buttons Alle knapper i tkinter på settings page.
     def disable_buttons(self, buttons):
         for button in buttons:
             button.config(state=tk.DISABLED)
 
-        self.frame.after(10000, lambda: self.enable_buttons(buttons))
+        self.frame.after(10000, lambda: self.enable_buttons())
 
-    # Efter cooldown gendannes den normale state ud fra vindue/gardin-status.
-    def enable_buttons(self, buttons):
+    ## Aktivere manuelle knapper ud fra aktuel vindue- og gardintilstand.
+    def enable_buttons(self):
         self.vindue_op.config(state=tk.DISABLED if self.app.window_open else tk.NORMAL)
         self.vindue_ned.config(state=tk.NORMAL if self.app.window_open else tk.DISABLED)
         self.gardin_op.config(state=tk.DISABLED if self.app.curtain_open else tk.NORMAL)
         self.gardin_ned.config(state=tk.NORMAL if self.app.curtain_open else tk.DISABLED)
 
-    # Alle manuelle knapper disables samlet efter tryk på en manuel knap.
+    ## Åbner vinduet og starter cooldown for manuel styring.
     def handle_open_window(self):
         self.app.open_window()
         self.disable_buttons(self.manual_buttons)
 
+    ## Lukker vinduet og starter cooldown for manuel styring.
     def handle_close_window(self):
         self.app.close_window()
         self.disable_buttons(self.manual_buttons)
 
+    ## Åbner gardinet og starter cooldown for manuel styring.
     def handle_open_curtain(self):
         self.app.open_curtain()
         self.disable_buttons(self.manual_buttons)
 
+    ## Lukker gardinet og starter cooldown for manuel styring.
     def handle_close_curtain(self):
         self.app.close_curtain()
         self.disable_buttons(self.manual_buttons)

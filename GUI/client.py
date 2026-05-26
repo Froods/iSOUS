@@ -2,6 +2,9 @@ import serial
 import time
 import struct
 
+## @package client
+# UART-klient brugt af GUI'en til kommunikation med embedded-controlleren.
+
 ###########################
 ##### UART Kommandoer #####
 ###########################
@@ -66,7 +69,7 @@ PARAMETER_OMITTED = 0x00
 
 ###########################
 
-# GUI sender stadig 4-byte kommandoer, men embedded svarer med 6-byte datapakker.
+# Embedded svarer med 6-byte datapakker.
 EXPECTED_RESPONSE_BYTES = 6
 
 # Konstant ID'er til parser
@@ -77,7 +80,18 @@ LIGHT_ID = 0x04
 WINDOW_STATE_ID = 0x05
 CURTAIN_STATE_ID = 0x06
 
+## Håndterer pakning, afsendelse og læsning af UART-kommandoer.
+#
+# Client indkapsler pyserial og udstiller en metode pr. GUI-kommando eller
+# sensor request. Sender kommandopakker på 4 bytes: kommando,
+# parameter 1, parameter 2 og STOPBYTE. Sensor og state læsninger forventer
+# seks-byte svar fra embedded.
 class Client:
+    ## Åbner den serielle forbindelse og venter på at den stabiliserer sig.
+    #
+    # @param port Seriel port for embedded UART-forbindelse.
+    # @param baudrate UART baudrate.
+    # @param timeout Timeout for seriel læsning i sek.
     def __init__(self, port, baudrate, timeout):
         # Initialiser attributter
         self.__port = port
@@ -102,6 +116,21 @@ class Client:
             print("Error: Ikke forbundet til nogen port")
 
     # --- Public methods ---
+
+    ## Sender ønsket temperatur og CO2-niveau til embedded.
+    #
+    # @param temp Byte for ønsket temperatur.
+    # @param co2 Byte for ønsket CO2-niveau.
+    def send_desired_values(self, temp, co2):
+        if self.ser.is_open:
+            # Send kommando med data
+            self.__send_command_UART(cmd=CMD_SET_DESIRED_VALUES, par1=temp, par2=co2)
+        else:
+            print("Error: Ikke forbundet til nogen port")
+
+    ## Få den aktuelle vinduestilstand fra embedded.
+    #
+    # @return 6 byte svar når det er gyldigt, ellers None.
     def get_window_open(self):
         # Fjern alle garbage værdier i RX buffer
         self.ser.reset_input_buffer()
@@ -119,6 +148,9 @@ class Client:
             print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
             return None
 
+    ## Få den aktuelle gardintilstand fra embedded.
+    #
+    # @return 6 byte svar når det er gyldigt, ellers None.
     def get_curtain_open(self):
         # Fjern alle garbage værdier i RX buffer
         self.ser.reset_input_buffer()
@@ -135,14 +167,10 @@ class Client:
         else:
             print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
             return None
-				
-    def send_desired_values(self, temp, co2):
-        if self.ser.is_open:
-            # Send kommando med data
-            self.__send_command_UART(cmd=CMD_SET_DESIRED_VALUES, par1=temp, par2=co2)
-        else:
-            print("Error: Ikke forbundet til nogen port")
 
+    ## Få den aktuelle indetemperatur.
+    #
+    # @return 6 byte svar når det er gyldigt, ellers None.
     def get_room_temp(self):
         # Fjern alle garbage værdier i RX buffer
         self.ser.reset_input_buffer()
@@ -160,6 +188,9 @@ class Client:
             print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
             return None
 
+    ## Få det aktuelle CO2-niveau indendørs.
+    #
+    # @return 6 byte svar når det er gyldigt, ellers None.
     def get_room_co2(self):
         # Fjern alle garbage værdier i RX buffer
         self.ser.reset_input_buffer()
@@ -177,6 +208,9 @@ class Client:
             print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
             return None
 
+    ## Få den aktuelle udetemperatur.
+    #
+    # @return 6 byte svar når det er gyldigt, ellers None.
     def get_outside_temp(self):
         self.ser.reset_input_buffer()
         self.__send_command_UART(cmd=CMD_GET_OUTSIDE_TEMP, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
@@ -189,6 +223,9 @@ class Client:
             print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
             return None
 
+    ## Få den aktuelle lysintensitet.
+    #
+    # @return 6 byte svar når det er gyldigt, ellers None.
     def get_light(self):
         self.ser.reset_input_buffer()
         self.__send_command_UART(cmd=CMD_GET_LIGHT, par1=PARAMETER_OMITTED, par2=PARAMETER_OMITTED)
@@ -200,6 +237,9 @@ class Client:
              print(f"Error: Arduino svarede ikke i tide ({self.__timeout} sekunder)")
              return None
 
+    ## Sender en manuel åbn/luk-kommando til vinduet.
+    #
+    # @param is_open True for at åbne vinduet, False for at lukke det.
     def set_window_state(self, is_open):
         if self.ser.is_open:
             par1 = 1 if is_open else 0
@@ -207,6 +247,9 @@ class Client:
         else:
             print("Error: Ikke forbundet til nogen port")
 
+    ## Sender en manuel åbn/luk-kommando til gardinet.
+    #
+    # @param is_open True for at åbne gardinet, False for at lukke det.
     def set_curtain_state(self, is_open):
         if self.ser.is_open:
             par1 = 1 if is_open else 0
@@ -214,6 +257,9 @@ class Client:
         else:
             print("Error: Ikke forbundet til nogen port")
 
+    ## Slår embedded automatisk styring til eller fra.
+    #
+    # @param is_auto True for at aktivere automatisk styring, False for at deaktivere den.
     def  toggle_auto_mode(self, is_auto):
         if self.ser.is_open:
             par1 = 1 if is_auto else 0
@@ -246,6 +292,12 @@ class Client:
 
     # --- Private methods ---
 
+    ## Pakker en 4 byte UART-kommandopakke.
+    #
+    # @param cmd Kommandobyte.
+    # @param par1 Første parameterbyte.
+    # @param par2 Anden parameterbyte.
+    # @return Pakkede bytes klar til afsendelse over UART.
     def __pack_values(self, cmd, par1, par2):
         # --- Parametre til struct.pack ---
         # 1. Parameter: Hvordan data skal pakkes
@@ -255,6 +307,11 @@ class Client:
         # 5. Parameter: STOPBYTE
         return struct.pack(">BBBB", cmd, par1, par2, STOPBYTE)
 
+    ## Sender en pakket kommandopakke over UART og tømmer den serielle strøm.
+    #
+    # @param cmd Kommandobyte.
+    # @param par1 Første parameterbyte.
+    # @param par2 Anden parameterbyte.
     def __send_command_UART(self, cmd, par1, par2):
         # Pak data i respektive bytes
         packet = self.__pack_values(cmd=cmd, par1=par1, par2=par2)
