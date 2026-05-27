@@ -16,14 +16,14 @@ from pages import HomePage, SettingsPage
 # GUI ejer tkinter-hovedvinduet, opretter sideobjekterne, kommunikerer med
 # embedded-controlleren gennem Client.py og opdaterer realtidsdata.
 class GUI:
-    # Svar-ID'er matcher embedded UARTinterface
-    STOPBYTE = 0xFF
+    # Svar ID'er matcher embedded UARTinterface.h.
     ROOM_TEMP_ID = 0x01
     ROOM_CO2_ID = 0x02
     OUTSIDE_TEMP_ID = 0x03
     LIGHT_ID = 0x04
     WINDOW_STATE_ID = 0x05
     CURTAIN_STATE_ID = 0x06
+    STOPBYTE = 0xFF
     LOG_INTERVAL_HOURS = 48
 
     ## Initialiserer tkinter-vinduet, UART-klienten, siderne og gemt tilstand.
@@ -43,7 +43,7 @@ class GUI:
         self.light = None
         self.manual = False
         self.window_open = False
-        self.curtain_open = False
+        self.curtain_open = True
         self.log_path = Path(__file__).resolve().parent.parent / "isous.log"
         self.co2_values = {
             "Ureguleret": 0,
@@ -286,10 +286,10 @@ class GUI:
     def update_sensor_values(self):
         if self.client is not None:
             try:
-                room_temp = self._parse_sensor_response(self.client.get_room_temp(), self.ROOM_TEMP_ID)
-                room_co2 = self._parse_sensor_response(self.client.get_room_co2(), self.ROOM_CO2_ID)
-                outside_temp = self._parse_sensor_response(self.client.get_outside_temp(), self.OUTSIDE_TEMP_ID)
-                light = self._parse_sensor_response(self.client.get_light(), self.LIGHT_ID)
+                room_temp = self.client.parse_sensor_response(self.client.get_room_temp(), self.ROOM_TEMP_ID)
+                room_co2 = self.client.parse_sensor_response(self.client.get_room_co2(), self.ROOM_CO2_ID)
+                outside_temp = self.client.parse_sensor_response(self.client.get_outside_temp(), self.OUTSIDE_TEMP_ID)
+                light = self.client.parse_sensor_response(self.client.get_light(), self.LIGHT_ID)
 
                 returned_window_arr = self.client.get_window_open()
                 if returned_window_arr[1] == 0x01:
