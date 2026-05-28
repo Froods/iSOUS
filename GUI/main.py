@@ -68,7 +68,7 @@ class GUI:
         self.load_logged_values()
         self.update_sensor_values()
 
-    ## Slår manuel tilstand til eller fra og giver embedded-controlleren besked.
+    ## Slår manuel tilstand til eller fra og giver embedded besked.
     #
     # @param is_manual True når manuel styring skal være aktiv.
     def set_manual_mode(self, is_manual):
@@ -127,6 +127,8 @@ class GUI:
             self.client.set_curtain_state(False)
             self.curtain_open = False
 
+
+    # AI hjalp med en co2_value bug, som altid gav en fejl når vi prøvede at gemme.
     ## Validerer og sender ønsket temperatur og CO2-indstilling.
     #
     # Sender de ønskede værdier via CMD_SET_DESIRED_VALUES, logger de valgte
@@ -149,7 +151,6 @@ class GUI:
             print("Fejl: Ugyldigt valg. Temperaturen skal være mellem 0 og 40")
             return
 
-        # CO2 værdierne kun skal ændres et sted, TJEK LIGE OP ..........................................................
         co2_value = self.co2_values.get(co2_level)
         if co2_value is None:
             print("Fejl: Ugyldigt CO2-niveau")
@@ -213,6 +214,7 @@ class GUI:
         self.settings_page.gardin_ned.config(state=tk.NORMAL if self.curtain_open else tk.DISABLED)
         self.settings_page.frame.tkraise()
 
+    # AI brugt til at lære omkring at læse og skrive til en fil
     ## Tilføjer de seneste realtidsdata til logfilen og sletter de gamle linjer.
     def _log_realtime_data(self):
         now = datetime.now()
@@ -253,6 +255,7 @@ class GUI:
         with self.log_path.open("w", encoding="utf-8") as log_file:
             log_file.writelines(kept_lines)
 
+    # AI hjalp med at strukturere opdatering af realtidsdata i GUI'en.
     ## Henter sensor og motor tilstand fra embedded og opdaterer GUI'en.
     #
     # Metoden planlægger selv næste kørsel med tkinter, og opdatere GUI'ens værdier.

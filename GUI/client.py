@@ -267,6 +267,7 @@ class Client:
         else:
             print("Error: Ikke forbundet til nogen port")
 
+    # AI brugt til at debugge, da vores første version af parseren ikke virkede under integrationstesten
     # parser 6 byte svar fra embedded
     def parse_sensor_response(self, response, expected_type):
         if response is None:
