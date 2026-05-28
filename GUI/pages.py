@@ -1,5 +1,7 @@
 import tkinter as tk
 
+# AI er brugt til hjælpe med layout
+# altså at få de forskellige widgets til at sidde der hvor jeg gerne vil have dem.
 
 ## @package pages
 # tkinter-sideklasser brugt af GUI'en.
@@ -220,6 +222,8 @@ class SettingsPage(Page):
             co2_level=self.wanted_co2.get(),
         )
 
+
+    #AI har kigget gennem start koden og hjulpet med deaktiver funktionen for de rigtige knapper
     ## Deaktiverer en gruppe knapper 10 sek efter manuel styring.
     #
     # @param buttons Alle knapper i tkinter på settings page.
