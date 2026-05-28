@@ -74,8 +74,8 @@ class HomePage(Page):
     def refresh_realtime_data(self):
         temp_inside_text = "--" if self.app.room_temp is None else f"{self.app.room_temp} C"
         temp_outside_text = "--" if self.app.temp_outside is None else f"{self.app.temp_outside} C"
-        co2_value = "Lav" if self.app.room_co2 == 3 else "Normalt indeklima" if self.app.room_co2 == 2 else "Høj" if self.app.room_co2 == 1 else "Ureguleret"
-        co2_text = "--" if self.app.room_co2 is None else f"{co2_value} ppm"
+        co2_value = "Lav" if self.app.room_co2 == 3 else "Normalt indeklima" if self.app.room_co2 == 2 else "Høj" if self.app.room_co2 == 1 else "Ureguleret"       
+        co2_text = "--" if self.app.room_co2 is None else f"{co2_value}"
         light_text = "--" if self.app.light is None else f"{self.app.light} lux"
 
         # tkinter
