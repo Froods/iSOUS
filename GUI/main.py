@@ -149,7 +149,6 @@ class GUI:
             print("Fejl: Ugyldigt valg. Temperaturen skal være mellem 0 og 40")
             return
 
-        # CO2 værdierne kun skal ændres et sted, TJEK LIGE OP ..........................................................
         co2_value = self.co2_values.get(co2_level)
         if co2_value is None:
             print("Fejl: Ugyldigt CO2-niveau")
