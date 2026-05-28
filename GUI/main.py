@@ -213,33 +213,6 @@ class GUI:
         self.settings_page.gardin_ned.config(state=tk.NORMAL if self.curtain_open else tk.DISABLED)
         self.settings_page.frame.tkraise()
 
-    ## Parser et 6-byte sensorsvar fra embedded-controlleren.
-    #
-    # @param response UART-svarbytes.
-    # @param expected_type Forventet svartype-byte.
-    # @return Parset sensorværdi eller None hvis svaret er ugyldigt.
-    def _parse_sensor_response(self, response, expected_type):
-        if response is None:
-            return None
-
-        if len(response) != 6:
-            return None
-
-        response_type = response[0]
-        payload = response[1:5]
-        stopbyte = response[5]
-
-        if stopbyte != self.STOPBYTE:
-            return None
-
-        if response_type != expected_type:
-            return None
-
-        if response_type == self.LIGHT_ID:
-            return int.from_bytes(payload, byteorder="big")
-
-        return payload[0]
-
     ## Tilføjer de seneste realtidsdata til logfilen og sletter de gamle linjer.
     def _log_realtime_data(self):
         now = datetime.now()
@@ -320,7 +293,7 @@ class GUI:
                 print(f"Fejl ved hentning af realtidsdata: {error}")
 
         self.home_page.refresh_realtime_data()
-        self.settings_page.enable_buttons(self.settings_page.manual_buttons)
+        self.settings_page.enable_buttons()
         self._log_realtime_data()
         self.root.after(5000, self.update_sensor_values)
 
