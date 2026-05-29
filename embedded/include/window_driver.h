@@ -75,10 +75,8 @@ public:
     void closeWindow();
 
     /**
-     * @brief Used only in "modultest" to test functionality of the code.
+     * @brief Function that returns the current state of the window.
      */
-    void test_Of_Motor();
-
 	bool getIsOpen();
 
 };

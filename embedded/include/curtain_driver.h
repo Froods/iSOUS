@@ -48,10 +48,8 @@ public:
     void initTimer2Timer();
 
     /**
-     * @brief A void delay function to make a 8,53 sec delay
+     * @brief Function that returns the current state of the curtain.
      */
-    void delayForCutain();
-
 	bool getIsOut();
 
 };

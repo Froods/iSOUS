@@ -86,21 +86,6 @@ if (this->isOpen == true)
   }
 }
 
-void WindowMotor::test_Of_Motor() {
-
-  openWindow();
-
-  openWindow();
-  
-  _delay_ms(1000);
-
-  closeWindow();
-
-  closeWindow();
-  
-  _delay_ms(1000);
-}
-
 bool WindowMotor::getIsOpen() {
 	return isOpen;
 }

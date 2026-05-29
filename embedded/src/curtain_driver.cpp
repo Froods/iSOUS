@@ -131,15 +131,6 @@ void CurtainMotor::rollInCurtain() {
     }
 }
 
-void CurtainMotor::test_of_curtain() {
-    rollOutCurtain();
-    rollOutCurtain();
-    _delay_ms(1000);
-    rollInCurtain();
-    rollInCurtain();
-    _delay_ms(1000);
-}
-
 bool CurtainMotor::getIsOut() {
 	return isOut;
 }
